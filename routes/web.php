@@ -19,9 +19,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [StudentController::class, 'index'])->name('dashboard');
 
     Route::post('students', [StudentController::class, 'store'])->name('students.store');
+    Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');
     Route::post('students/{student}/qr/regenerate', [StudentController::class, 'regenerateQr'])->name('students.qr.regenerate');
 
     Route::post('attendance/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
+    Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
 
     Route::get('comments', [CommentController::class, 'index'])->name('comments.index');
     Route::put('comments/{comment}', [CommentController::class, 'update'])->name('comments.update');

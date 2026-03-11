@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Student;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,6 +15,8 @@ class StudentController extends Controller
 {
     public function index(): Response
     {
+        $date = CarbonImmutable::now()->toDateString();
+
         $students = Student::query()
             ->orderBy('name')
             ->get([
@@ -24,6 +29,35 @@ class StudentController extends Controller
                 'schedule',
                 'created_at',
             ]);
+
+        $latestByStudent = Attendance::query()
+            ->whereDate('scanned_at', $date)
+            ->orderByDesc('scanned_at')
+            ->get(['id', 'student_id', 'status', 'scanned_at'])
+            ->groupBy('student_id')
+            ->map(fn ($items) => $items->first());
+
+        $students = $students->map(function ($student) use ($latestByStudent) {
+            $latest = $latestByStudent->get($student->id);
+
+            return [
+                'id' => $student->id,
+                'name' => $student->name,
+                'student_number' => $student->student_number,
+                'email' => $student->email,
+                'section' => $student->section,
+                'qr_token' => $student->qr_token,
+                'schedule' => $student->schedule,
+                'created_at' => $student->created_at,
+                'latest_attendance' => $latest
+                    ? [
+                        'id' => $latest->id,
+                        'status' => $latest->status,
+                        'scanned_at' => $latest->scanned_at,
+                    ]
+                    : null,
+            ];
+        });
 
         return Inertia::render('Dashboard', [
             'students' => $students,
@@ -62,6 +96,44 @@ class StudentController extends Controller
             ->back()
             ->with('flash', [
                 'student_created' => true,
+                'student_id' => $student->id,
+            ]);
+    }
+
+    public function update(Request $request, Student $student)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'student_number' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('students', 'student_number')->ignore($student->id),
+            ],
+            'email' => ['nullable', 'email', 'max:255'],
+            'section' => ['nullable', 'string', 'max:255'],
+            'schedule' => ['required', 'array', 'min:1'],
+            'schedule.*.start' => ['required', 'date_format:H:i'],
+            'schedule.*.end' => ['required', 'date_format:H:i'],
+        ]);
+
+        $data['schedule'] = collect($data['schedule'])
+            ->filter(fn ($slot) => isset($slot['start'], $slot['end']))
+            ->map(function ($slot) {
+                return [
+                    'start' => $slot['start'],
+                    'end' => $slot['end'],
+                ];
+            })
+            ->values()
+            ->all();
+
+        $student->update($data);
+
+        return redirect()
+            ->back()
+            ->with('flash', [
+                'student_updated' => true,
                 'student_id' => $student->id,
             ]);
     }

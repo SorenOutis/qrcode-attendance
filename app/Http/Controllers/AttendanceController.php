@@ -10,6 +10,25 @@ use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
+    public function update(Request $request, Attendance $attendance): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:Present,Late,Time Out'],
+        ]);
+
+        $attendance->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'attendance' => [
+                'id' => $attendance->id,
+                'status' => $attendance->status,
+                'scanned_at' => $attendance->scanned_at,
+            ],
+        ]);
+    }
+
     public function scan(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -28,27 +47,54 @@ class AttendanceController extends Controller
         $date = $now->toDateString();
         $time = $now->format('H:i');
 
-        $schedule = collect($student->schedule ?? []);
+        $schedule = collect($student->schedule ?? [])
+            ->filter(fn ($slot) => isset($slot['start'], $slot['end']))
+            ->values();
 
-        // Find the active slot based on current time
-        $slotIndex = $schedule->search(function ($slot) use ($time) {
-            if (! isset($slot['start'], $slot['end'])) {
-                return false;
-            }
-
-            return $time >= $slot['start'] && $time <= $slot['end'];
-        });
-
-        if ($slotIndex === false) {
+        if ($schedule->isEmpty()) {
             return response()->json([
-                'message' => 'No active schedule for this time.',
+                'message' => 'No schedule configured for this student.',
             ], 422);
         }
 
-        $slot = $schedule[$slotIndex];
+        // Map ANY scan time to a slot:
+        // - If within a slot: use that slot
+        // - If between slots / before first slot: use the next upcoming slot
+        // - If after last slot: use the last slot
+        $slotIndex = null;
+        $slot = null;
+        $start = null;
+        $end = null;
 
-        $start = CarbonImmutable::parse($date.' '.$slot['start']);
-        $end = CarbonImmutable::parse($date.' '.$slot['end']);
+        foreach ($schedule as $i => $candidate) {
+            $candidateStart = CarbonImmutable::parse($date.' '.$candidate['start']);
+            $candidateEnd = CarbonImmutable::parse($date.' '.$candidate['end']);
+
+            if ($now->betweenIncluded($candidateStart, $candidateEnd)) {
+                $slotIndex = (int) $i;
+                $slot = $candidate;
+                $start = $candidateStart;
+                $end = $candidateEnd;
+                break;
+            }
+
+            if ($now->lessThan($candidateStart)) {
+                // Next upcoming slot
+                $slotIndex = (int) $i;
+                $slot = $candidate;
+                $start = $candidateStart;
+                $end = $candidateEnd;
+                break;
+            }
+        }
+
+        if ($slotIndex === null) {
+            // After all slots → last slot
+            $slotIndex = (int) ($schedule->count() - 1);
+            $slot = $schedule[$slotIndex];
+            $start = CarbonImmutable::parse($date.' '.$slot['start']);
+            $end = CarbonImmutable::parse($date.' '.$slot['end']);
+        }
 
         $graceMinutes = 15;
 
