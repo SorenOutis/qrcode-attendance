@@ -511,7 +511,7 @@ onMounted(() => {
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
             <div
                 ref="cardsRef"
-                class="grid auto-rows-min gap-4 md:grid-cols-3"
+                class="grid auto-rows-min gap-4 grid-cols-2 md:grid-cols-3"
             >
                 <div
                     data-card
@@ -564,7 +564,7 @@ onMounted(() => {
 
                 <div
                     data-card
-                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-indigo-500/10 via-background to-background p-4 shadow-sm dark:border-sidebar-border"
+                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-indigo-500/10 via-background to-background p-4 shadow-sm dark:border-sidebar-border col-span-2 md:col-span-1"
                 >
                     <div class="flex h-full flex-col justify-center gap-2">
                         <p
@@ -599,8 +599,8 @@ onMounted(() => {
                     </Button>
                 </div>
 
-                <div class="max-h-[520px] overflow-y-auto">
-                    <table class="min-w-full text-left text-sm">
+                <div class="max-h-[520px] overflow-x-auto overflow-y-auto w-full">
+                    <table class="min-w-full text-left text-sm whitespace-nowrap">
                         <thead
                             class="sticky top-0 z-10 border-b bg-background/80 backdrop-blur"
                         >

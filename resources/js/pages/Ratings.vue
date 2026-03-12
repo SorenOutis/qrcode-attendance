@@ -213,7 +213,7 @@ onMounted(() => {
 
             <div
                 ref="listRef"
-                class="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
+                class="columns-1 md:columns-2 xl:columns-3 gap-4 space-y-4"
             >
                 <div
                     v-if="ratings.length === 0"
@@ -228,7 +228,7 @@ onMounted(() => {
                     v-for="rating in ratings"
                     :key="rating.id"
                     data-rating-card
-                    class="flex flex-col justify-between rounded-xl border border-sidebar-border/70 bg-background/80 p-4 text-sm shadow-sm backdrop-blur dark:border-sidebar-border"
+                    class="break-inside-avoid mb-4 flex flex-col justify-between rounded-xl border border-sidebar-border/70 bg-background/80 p-4 text-sm shadow-sm backdrop-blur dark:border-sidebar-border"
                 >
                     <div class="space-y-2">
                         <div class="flex items-center justify-between gap-2">
