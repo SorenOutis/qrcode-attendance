@@ -151,5 +151,19 @@ class StudentController extends Controller
                 'student_id' => $student->id,
             ]);
     }
+
+    public function attendance(Student $student): \Illuminate\Http\JsonResponse
+    {
+        $history = $student->attendances()
+            ->orderByDesc('scanned_at')
+            ->get(['id', 'status', 'scanned_at'])
+            ->map(fn ($a) => [
+                'id'         => $a->id,
+                'status'     => $a->status,
+                'scanned_at' => $a->scanned_at->toISOString(),
+            ]);
+
+        return response()->json(['history' => $history]);
+    }
 }
 

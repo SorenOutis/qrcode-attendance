@@ -27,6 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('students', [StudentController::class, 'store'])->name('students.store');
     Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');
     Route::post('students/{student}/qr/regenerate', [StudentController::class, 'regenerateQr'])->name('students.qr.regenerate');
+    Route::get('students/{student}/attendance', [StudentController::class, 'attendance'])->name('students.attendance');
 
     Route::post('attendance/scan', [AttendanceController::class, 'scan'])->name('attendance.scan');
     Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');

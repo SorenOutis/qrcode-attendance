@@ -21,6 +21,12 @@ import {
 import commentsRoutes from '@/routes/comments';
 import ratingsRoutes from '@/routes/ratings';
 
+type AttendanceRecord = {
+    id: number;
+    status: string;
+    scanned_at: string;
+};
+
 type Student = {
     id: number;
     name: string;
@@ -58,6 +64,12 @@ const editModalOpen = ref(false);
 const scanModalOpen = ref(false);
 const selectedStudent = ref<Student | null>(null);
 const qrModalOpen = ref(false);
+
+const studentInfoModalOpen = ref(false);
+const infoStudent = ref<Student | null>(null);
+const attendanceHistory = ref<AttendanceRecord[]>([]);
+const historyExpanded = ref(false);
+const historyLoading = ref(false);
 
 const name = ref('');
 const studentNumber = ref('');
@@ -146,6 +158,54 @@ function addScheduleSlot() {
 function removeScheduleSlot(index: number) {
     if (schedules.value.length === 1) return;
     schedules.value.splice(index, 1);
+}
+
+function openStudentInfoModal(student: Student) {
+    infoStudent.value = student;
+    attendanceHistory.value = [];
+    historyExpanded.value = false;
+    historyLoading.value = true;
+    studentInfoModalOpen.value = true;
+
+    window.fetch(`/students/${student.id}/attendance`, {
+        credentials: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN':
+                (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)
+                    ?.content ?? '',
+        },
+    })
+        .then((r) => r.json())
+        .then((data: { history: AttendanceRecord[] }) => {
+            attendanceHistory.value = data.history;
+        })
+        .catch(() => {})
+        .finally(() => {
+            historyLoading.value = false;
+        });
+}
+
+function closeStudentInfoModal() {
+    studentInfoModalOpen.value = false;
+    infoStudent.value = null;
+    attendanceHistory.value = [];
+}
+
+function openEditFromInfo() {
+    const student = infoStudent.value;
+    if (!student) return;
+    closeStudentInfoModal();
+    // small delay so modal closes first
+    setTimeout(() => openEditModal(student), 80);
+}
+
+function openQrFromInfo() {
+    const student = infoStudent.value;
+    if (!student) return;
+    closeStudentInfoModal();
+    // small delay so modal closes first
+    setTimeout(() => openQrModal(student), 80);
 }
 
 function openEditModal(student: Student) {
@@ -646,9 +706,9 @@ onMounted(() => {
                                 <th class="px-4 py-2 text-xs font-medium">
                                     Email
                                 </th>
-                                <th class="px-4 py-2 text-right text-xs font-medium">
+                                <!-- <th class="px-4 py-2 text-right text-xs font-medium">
                                     QR
-                                </th>
+                                </th> -->
                             </tr>
                         </thead>
                         <tbody>
@@ -670,21 +730,19 @@ onMounted(() => {
                             <tr
                                 v-for="student in students"
                                 :key="student.id"
-                                class="border-b transition-colors hover:bg-muted/40 last:border-b-0"
+                                class="border-b transition-colors hover:bg-muted/40 last:border-b-0 cursor-pointer"
+                                @click="openStudentInfoModal(student)"
                             >
                                 <td class="px-4 py-2 text-sm font-medium">
-                                    <button
-                                        type="button"
-                                        class="underline-offset-2 hover:underline"
-                                        @click="openEditModal(student)"
-                                    >
+                                    <span class="flex items-center gap-1.5">
                                         {{ student.name }}
-                                    </button>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground opacity-60"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                    </span>
                                 </td>
                                 <td class="px-4 py-2 text-xs text-muted-foreground">
                                     {{ student.student_number }}
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="px-4 py-2" @click.stop>
                                     <div class="flex flex-col gap-1">
                                         <div class="flex items-center gap-2">
                                             <span
@@ -741,7 +799,7 @@ onMounted(() => {
                                 <td class="px-4 py-2 text-xs text-muted-foreground">
                                     {{ student.email || '—' }}
                                 </td>
-                                <td class="px-4 py-2 text-right text-xs text-muted-foreground">
+                                <!-- <td class="px-4 py-2 text-right text-xs text-muted-foreground" @click.stop>
                                     <button
                                         type="button"
                                         class="underline-offset-2 hover:underline"
@@ -749,7 +807,7 @@ onMounted(() => {
                                     >
                                         View QR
                                     </button>
-                                </td>
+                                </td> -->
                             </tr>
                         </tbody>
                     </table>
@@ -895,6 +953,168 @@ onMounted(() => {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            <!-- Student Info Modal -->
+            <Dialog v-model:open="studentInfoModalOpen">
+                <DialogContent class="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Student Info</DialogTitle>
+                    </DialogHeader>
+
+                    <div v-if="infoStudent" class="space-y-4">
+                        <!-- Profile card -->
+                        <div class="rounded-lg border bg-muted/30 p-4 space-y-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <p class="text-base font-semibold leading-tight">
+                                        {{ infoStudent.name }}
+                                    </p>
+                                    <p class="text-xs text-muted-foreground mt-0.5">
+                                        {{ infoStudent.student_number }}
+                                        <span v-if="infoStudent.section"> · {{ infoStudent.section }}</span>
+                                    </p>
+                                    <p v-if="infoStudent.email" class="text-xs text-muted-foreground">
+                                        {{ infoStudent.email }}
+                                    </p>
+                                </div>
+                                <!-- Today's status badge -->
+                                <span
+                                    v-if="infoStudent.latest_attendance"
+                                    :class="[
+                                        'shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
+                                        infoStudent.latest_attendance.status === 'Present' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                                        infoStudent.latest_attendance.status === 'Late'    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                                        infoStudent.latest_attendance.status === 'Absent'  ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                                                                                             'bg-muted text-muted-foreground'
+                                    ]"
+                                >
+                                    {{ infoStudent.latest_attendance.status }}
+                                </span>
+                                <span
+                                    v-else
+                                    class="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold bg-muted text-muted-foreground"
+                                >
+                                    No record today
+                                </span>
+                            </div>
+
+                            <!-- Schedule -->
+                            <div v-if="infoStudent.schedule && infoStudent.schedule.length > 0" class="pt-1">
+                                <p class="text-[11px] font-medium uppercase text-muted-foreground mb-1">Schedule</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span
+                                        v-for="(slot, i) in infoStudent.schedule"
+                                        :key="i"
+                                        class="rounded-md border px-2 py-0.5 text-[11px] font-mono"
+                                    >
+                                        {{ slot.start }} – {{ slot.end }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attendance History -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Attendance History
+                                </p>
+                                <button
+                                    v-if="attendanceHistory.length > 5"
+                                    type="button"
+                                    class="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                                    @click="historyExpanded = !historyExpanded"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="12" height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        :class="['transition-transform', historyExpanded ? 'rotate-180' : '']"
+                                    >
+                                        <path d="m6 9 6 6 6-6"/>
+                                    </svg>
+                                    {{ historyExpanded ? 'Collapse' : `Show all (${attendanceHistory.length})` }}
+                                </button>
+                            </div>
+
+                            <!-- Loading state -->
+                            <div v-if="historyLoading" class="py-4 text-center text-xs text-muted-foreground">
+                                Loading history…
+                            </div>
+
+                            <!-- Empty state -->
+                            <div
+                                v-else-if="attendanceHistory.length === 0"
+                                class="py-4 text-center text-xs text-muted-foreground"
+                            >
+                                No attendance records found.
+                            </div>
+
+                            <!-- History list -->
+                            <div
+                                v-else
+                                :class="['overflow-y-auto rounded-lg border divide-y transition-all', historyExpanded ? 'max-h-64' : '']" 
+                            >
+                                <div
+                                    v-for="record in historyExpanded ? attendanceHistory : attendanceHistory.slice(0, 5)"
+                                    :key="record.id"
+                                    class="flex items-center justify-between px-3 py-2 text-xs"
+                                >
+                                    <span class="text-muted-foreground">
+                                        {{ formatDateTime(record.scanned_at) }}
+                                    </span>
+                                    <span
+                                        :class="[
+                                            'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                                            record.status === 'Present' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                                            record.status === 'Late'    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                                            record.status === 'Absent'  ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                                                                          'bg-muted text-muted-foreground'
+                                        ]"
+                                    >
+                                        {{ record.status }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter class="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="flex-1 sm:flex-none"
+                                @click="openEditFromInfo"
+                            >
+                                Edit student
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="flex-1 sm:flex-none"
+                                @click="openQrFromInfo"
+                            >
+                                View QR
+                            </Button>
+                        </div>
+                        <Button
+                            type="button"
+                            size="sm"
+                            class="w-full sm:w-auto"
+                            @click="closeStudentInfoModal"
+                        >
+                            Close
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -1195,7 +1415,7 @@ onMounted(() => {
                 <div class="relative flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
                 </div>
-                <span class="hidden sm:inline font-semibold">Scan Attendance</span>
+                <span class="hidden sm:inline font-semibold">Scan</span>
                 <span class="sm:hidden font-semibold">Scan</span>
             </Button>
         </div>
