@@ -4,12 +4,18 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\StudentController;
+use App\Models\Comment;
+use App\Models\Rating;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'Welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::get('/', function () {
+    return inertia('Welcome', [
+        'canRegister' => Features::enabled(Features::registration()),
+        'comments' => Comment::where('is_public', true)->latest()->take(10)->get(),
+        'ratings' => Rating::where('is_public', true)->latest()->take(10)->get(),
+    ]);
+})->name('home');
 
 // Guest + authenticated users can submit comments
 Route::post('comments', [CommentController::class, 'store'])->name('comments.store');

@@ -15,17 +15,37 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 
+type Comment = {
+    id: number;
+    name?: string | null;
+    message: string;
+    created_at: string;
+};
+
+type Rating = {
+    id: number;
+    name?: string | null;
+    score: number;
+    message?: string | null;
+    created_at: string;
+};
+
 withDefaults(
     defineProps<{
         canRegister: boolean;
+        comments?: Comment[];
+        ratings?: Rating[];
     }>(),
     {
         canRegister: true,
+        comments: () => [],
+        ratings: () => [],
     },
 );
 
 const heroRef = ref<HTMLElement | null>(null);
 const formRef = ref<HTMLElement | null>(null);
+const marqueeRef = ref<HTMLElement | null>(null);
 
 const form = useForm({
     name: '',
@@ -101,6 +121,18 @@ onMounted(() => {
             delay: 0.4,
             ease: 'power3.out',
         });
+    }
+
+    if (marqueeRef.value) {
+        const content = marqueeRef.value.querySelector('.marquee-content');
+        if (content) {
+            gsap.to(content, {
+                xPercent: -50,
+                ease: 'none',
+                duration: 25,
+                repeat: -1,
+            });
+        }
     }
 });
 </script>
@@ -1034,6 +1066,70 @@ onMounted(() => {
                 </div>
             </form>
         </section>
+        <section
+            v-if="comments.length > 0 || ratings.length > 0"
+            class="mt-16 w-full lg:max-w-6xl overflow-hidden py-10"
+        >
+            <h2 class="text-center text-xl font-semibold mb-8 text-[#111827] dark:text-[#F9FAFB]">
+                Community Wall
+            </h2>
+            <div
+                ref="marqueeRef"
+                class="w-full overflow-hidden flex whitespace-nowrap"
+                style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);"
+            >
+                <div class="marquee-content flex gap-6 px-4">
+                    <template v-for="dup in 2" :key="dup">
+                        <div
+                            v-for="rating in ratings"
+                            :key="'r-'+rating.id+'-'+dup"
+                            class="inline-flex flex-col w-[300px] shrink-0 whitespace-normal rounded-xl border border-[#19140035] bg-white p-5 shadow-sm dark:border-[#3E3E3A] dark:bg-[#161615]"
+                        >
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-[#111827] dark:text-[#E5E7EB]">
+                                    {{ rating.name || 'Anonymous' }}
+                                </span>
+                                <div class="flex items-center gap-0.5 text-sm">
+                                    <span
+                                        v-for="s in 5"
+                                        :key="s"
+                                        :class="s <= rating.score ? 'text-yellow-400' : 'text-muted-foreground/40'"
+                                    >★</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] line-clamp-3">
+                                {{ rating.message || 'Rated the system.' }}
+                            </p>
+                            <span class="mt-auto pt-3 text-[10px] text-muted-foreground">
+                                {{ new Date(rating.created_at).toLocaleDateString() }}
+                            </span>
+                        </div>
+                        
+                        <div
+                            v-for="comment in comments"
+                            :key="'c-'+comment.id+'-'+dup"
+                            class="inline-flex flex-col w-[300px] shrink-0 whitespace-normal rounded-xl border border-[#19140035] bg-gradient-to-br from-[#f53003]/5 to-transparent p-5 shadow-sm dark:border-[#3E3E3A] dark:bg-[#161515]"
+                        >
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-[#111827] dark:text-[#E5E7EB]">
+                                    {{ comment.name || 'Anonymous' }}
+                                </span>
+                                <span class="text-[9px] uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A] bg-[#19140015] dark:bg-[#3E3E3A] px-2 py-0.5 rounded-full">
+                                    Feedback
+                                </span>
+                            </div>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A] line-clamp-3">
+                                {{ comment.message }}
+                            </p>
+                            <span class="mt-auto pt-3 text-[10px] text-muted-foreground">
+                                {{ new Date(comment.created_at).toLocaleDateString() }}
+                            </span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+
         <div class="hidden h-14.5 lg:block"></div>
 
         <Dialog v-model:open="rateModalOpen">

@@ -100,14 +100,62 @@ function applyFilter() {
 }
 
 onMounted(() => {
+    // 1. Initial Page Heading Animation
+    gsap.from('.rounded-xl.border.bg-gradient-to-br', {
+        opacity: 0,
+        y: -15,
+        duration: 0.8,
+        ease: 'power3.out'
+    });
+
     if (!listRef.value) return;
     const cards = listRef.value.querySelectorAll<HTMLElement>('[data-comment-card]');
+    
+    // 2. Staggered Entry for Comment Cards
     gsap.from(cards, {
         opacity: 0,
-        y: 24,
-        duration: 0.7,
-        stagger: 0.06,
-        ease: 'power3.out',
+        y: 30,
+        duration: 0.8,
+        stagger: 0.08,
+        ease: 'expo.out',
+    });
+
+    // 3. Hover Interactions
+    cards.forEach((card) => {
+        card.addEventListener('mouseenter', () => {
+            gsap.to(card, {
+                y: -6,
+                scale: 1.02,
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                borderColor: 'rgba(var(--primary), 0.4)',
+                duration: 0.4,
+                ease: 'power3.out'
+            });
+        });
+        card.addEventListener('mouseleave', () => {
+            gsap.to(card, {
+                y: 0,
+                scale: 1,
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                borderColor: 'inherit',
+                duration: 0.6,
+                ease: 'expo.out'
+            });
+        });
+    });
+
+    // 4. Button Press Micro-interactions
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach((btn) => {
+        btn.addEventListener('mousedown', () => {
+            gsap.to(btn, { scale: 0.95, duration: 0.1, ease: 'power1.out' });
+        });
+        btn.addEventListener('mouseup', () => {
+            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'bounce.out' });
+        });
+        btn.addEventListener('mouseleave', () => {
+            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power1.out' });
+        });
     });
 });
 </script>

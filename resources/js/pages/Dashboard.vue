@@ -434,6 +434,7 @@ function startScanningLoop() {
 }
 
 onMounted(() => {
+    // 1. Enter and Hover Animations for Cards
     if (cardsRef.value) {
         const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
         gsap.from(cards, {
@@ -441,19 +442,65 @@ onMounted(() => {
             y: 40,
             duration: 0.8,
             stagger: 0.1,
-            ease: 'power3.out',
+            ease: 'expo.out',
+        });
+        
+        cards.forEach((card) => {
+            card.addEventListener('mouseenter', () => {
+                gsap.to(card, {
+                    scale: 1.02,
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    y: -5,
+                    duration: 0.4,
+                    ease: 'power3.out'
+                });
+            });
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, {
+                    scale: 1,
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+                    y: 0,
+                    duration: 0.6,
+                    ease: 'expo.out'
+                });
+            });
         });
     }
 
+    // 2. Table and Row Entrance
     if (tableRef.value) {
         gsap.from(tableRef.value, {
             opacity: 0,
             y: 30,
             duration: 0.9,
             delay: 0.3,
-            ease: 'power3.out',
+            ease: 'expo.out',
+        });
+        
+        const rows = tableRef.value.querySelectorAll('tbody tr');
+        gsap.from(rows, {
+            opacity: 0,
+            x: -20,
+            duration: 0.6,
+            stagger: 0.05,
+            delay: 0.5,
+            ease: 'power2.out',
         });
     }
+
+    // 3. Button Press Micro-interactions
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach((btn) => {
+        btn.addEventListener('mousedown', () => {
+            gsap.to(btn, { scale: 0.95, duration: 0.1, ease: 'power1.out' });
+        });
+        btn.addEventListener('mouseup', () => {
+            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'bounce.out' });
+        });
+        btn.addEventListener('mouseleave', () => {
+            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power1.out' });
+        });
+    });
 });
 </script>
 
@@ -638,6 +685,9 @@ onMounted(() => {
                                                 <option value="Late">Late</option>
                                                 <option value="Time Out">
                                                     Time Out
+                                                </option>
+                                                <option value="Absent">
+                                                    Absent
                                                 </option>
                                             </select>
                                         </div>

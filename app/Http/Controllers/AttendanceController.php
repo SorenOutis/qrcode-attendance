@@ -13,7 +13,7 @@ class AttendanceController extends Controller
     public function update(Request $request, Attendance $attendance): JsonResponse
     {
         $validated = $request->validate([
-            'status' => ['required', 'string', 'in:Present,Late,Time Out'],
+            'status' => ['required', 'string', 'in:Present,Late,Time Out,Absent'],
         ]);
 
         $attendance->update([
