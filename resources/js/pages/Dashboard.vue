@@ -577,20 +577,12 @@ onMounted(() => {
                                 Actions
                             </p>
                             <p class="mt-2 text-sm text-muted-foreground">
-                                Quickly manage students and scan attendance
-                                codes.
+                                Quickly manage students.
                             </p>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <Button size="sm" @click="openCreateModal">
                                 Add student
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                @click="openScanModal"
-                            >
-                                Scan attendance
                             </Button>
                         </div>
                     </div>
@@ -1191,6 +1183,21 @@ onMounted(() => {
                     </div>
                 </DialogContent>
             </Dialog>
+        </div>
+
+        <!-- Floating Scan Widget -->
+        <div class="fixed bottom-6 right-6 z-50">
+            <Button
+                size="lg"
+                class="group h-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 pr-6 pl-5 dark:shadow-[0_8px_30px_rgb(255,255,255,0.1)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.15)] bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0"
+                @click="openScanModal"
+            >
+                <div class="relative flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+                </div>
+                <span class="hidden sm:inline font-semibold">Scan Attendance</span>
+                <span class="sm:hidden font-semibold">Scan</span>
+            </Button>
         </div>
     </AppLayout>
 </template>
