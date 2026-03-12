@@ -100,61 +100,92 @@ function applyFilter() {
 }
 
 onMounted(() => {
-    // 1. Initial Page Heading Animation
-    gsap.from('.rounded-xl.border.bg-gradient-to-br', {
-        opacity: 0,
-        y: -15,
-        duration: 0.8,
-        ease: 'power3.out'
-    });
+    // 1. Initial Page Heading Animation with 3D
+    const header = document.querySelector('.rounded-xl.border.bg-gradient-to-br');
+    if (header) {
+        gsap.set(header.parentElement, { perspective: 1000 });
+        gsap.from(header, {
+            opacity: 0,
+            y: -30,
+            rotationX: 20,
+            z: -50,
+            duration: 1,
+            ease: 'power3.out'
+        });
+    }
 
     if (!listRef.value) return;
     const cards = listRef.value.querySelectorAll<HTMLElement>('[data-comment-card]');
     
-    // 2. Staggered Entry for Comment Cards
+    // Wrap cards list with perspective
+    gsap.set(listRef.value, { perspective: 1000 });
+    
+    // 2. Staggered 3D Entry for Comment Cards
     gsap.from(cards, {
         opacity: 0,
-        y: 30,
-        duration: 0.8,
-        stagger: 0.08,
-        ease: 'expo.out',
+        y: 50,
+        rotationX: -30,
+        z: -100,
+        duration: 1,
+        stagger: 0.1,
+        ease: 'back.out(1.2)',
     });
 
-    // 3. Hover Interactions
+    // 3. 3D Hover Interactions
     cards.forEach((card) => {
-        card.addEventListener('mouseenter', () => {
+        gsap.set(card, { transformStyle: "preserve-3d" });
+
+        card.addEventListener('mousemove', (e: MouseEvent) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = ((y - centerY) / centerY) * -8;
+            const rotateY = ((x - centerX) / centerX) * 8;
+            
             gsap.to(card, {
-                y: -6,
-                scale: 1.02,
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                borderColor: 'rgba(var(--primary), 0.4)',
+                rotationX: rotateX,
+                rotationY: rotateY,
+                scale: 1.03,
+                z: 20,
+                zIndex: 50,
+                boxShadow: '0 25px 30px -10px rgba(var(--primary-rgb), 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+                borderColor: 'rgba(var(--primary), 0.5)',
                 duration: 0.4,
                 ease: 'power3.out'
             });
         });
+
         card.addEventListener('mouseleave', () => {
             gsap.to(card, {
-                y: 0,
+                rotationX: 0,
+                rotationY: 0,
                 scale: 1,
+                z: 0,
+                zIndex: 0,
                 boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
                 borderColor: 'inherit',
                 duration: 0.6,
-                ease: 'expo.out'
+                ease: 'elastic.out(1, 0.4)'
             });
         });
     });
 
-    // 4. Button Press Micro-interactions
+    // 4. Button Press Micro-interactions with 3D Depth
     const buttons = document.querySelectorAll('button');
     buttons.forEach((btn) => {
+        gsap.set(btn, { transformStyle: "preserve-3d" });
         btn.addEventListener('mousedown', () => {
-            gsap.to(btn, { scale: 0.95, duration: 0.1, ease: 'power1.out' });
+            gsap.to(btn, { scale: 0.95, z: -5, duration: 0.1, ease: 'power1.out' });
         });
         btn.addEventListener('mouseup', () => {
-            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'bounce.out' });
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
         });
         btn.addEventListener('mouseleave', () => {
-            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power1.out' });
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
         });
     });
 });

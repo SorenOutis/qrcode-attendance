@@ -117,27 +117,109 @@ const prevCard = () => {
 const animateCarousel = () => {
     if (!carouselRef.value) return;
     
-    // Smooth transition between cards
+    const items = carouselRef.value.querySelectorAll<HTMLElement>('.carousel-item');
+    
+    // Smooth transition between cards with slight 3D pop
     gsap.to(carouselRef.value, {
         x: -(activeIndex.value * cardWidth),
         duration: 0.8,
         ease: 'power3.inOut' // Very smooth, premium feel ease
+    });
+    
+    // Animate individual items for 3D effect
+    items.forEach((item, index) => {
+        if (index === activeIndex.value) {
+            gsap.to(item, {
+                scale: 1,
+                opacity: 1,
+                rotationY: 0,
+                z: 0,
+                duration: 0.8,
+                ease: 'power3.inOut'
+            });
+        } else {
+            // Revert tilt and scale down inactive cards with 3D rotation
+            gsap.to(item, {
+                scale: 0.88,
+                opacity: 0.5,
+                rotationX: 0,
+                rotationY: index < activeIndex.value ? 25 : -25,
+                z: -50,
+                duration: 0.8,
+                ease: 'power3.inOut'
+            });
+        }
     });
 };
 
 onMounted(() => {
     const tl = gsap.timeline();
 
-    tl.fromTo(titleRef.value, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1.2, ease: 'power4.out' })
-      .fromTo(textRef.value, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power4.out' }, "-=0.9")
-      .fromTo(btnRef.value, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'power4.out' }, "-=0.7");
-      
+    // Setup 3D perspectives
+    if (containerRef.value) {
+        gsap.set([titleRef.value, textRef.value, btnRef.value], { transformStyle: "preserve-3d" });
+        tl.fromTo(titleRef.value, { y: 60, opacity: 0, rotationX: 45, z: -100 }, { y: 0, opacity: 1, rotationX: 0, z: 0, duration: 1.2, ease: 'power4.out' })
+          .fromTo(textRef.value, { y: 40, opacity: 0, rotationX: 20, z: -50 }, { y: 0, opacity: 1, rotationX: 0, z: 0, duration: 1, ease: 'power4.out' }, "-=0.9")
+          .fromTo(btnRef.value, { y: 30, opacity: 0, z: -30 }, { y: 0, opacity: 1, z: 0, duration: 0.8, ease: 'power4.out' }, "-=0.7");
+    }
+
     if (carouselContainerRef.value) {
-        gsap.fromTo(carouselContainerRef.value.querySelectorAll('.carousel-item'), 
-            { x: 100, opacity: 0 }, 
-            { x: 0, opacity: 1, duration: 1, stagger: 0.1, ease: 'power3.out' }, 
-            "-=0.8"
+        gsap.set(carouselContainerRef.value, { perspective: 1200 });
+        const items = carouselContainerRef.value.querySelectorAll<HTMLElement>('.carousel-item');
+        
+        items.forEach(item => gsap.set(item, { transformStyle: "preserve-3d" }));
+        
+        // Initial setup for inactive vs active cards
+        items.forEach((item, index) => {
+            if (index !== activeIndex.value) {
+                gsap.set(item, { scale: 0.88, opacity: 0.5, rotationY: index < activeIndex.value ? 25 : -25, z: -50 });
+            }
+        });
+
+        gsap.from(items, 
+            { x: 150, opacity: 0, rotationY: -45, z: -150, duration: 1.2, stagger: 0.1, ease: 'power3.out' }
         );
+
+        // 3D tilt effect on hover for active item
+        items.forEach((card, index) => {
+            card.addEventListener('mousemove', (e: MouseEvent) => {
+                if (activeIndex.value !== index) return;
+                
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -15;
+                const rotateY = ((x - centerX) / centerX) * 15;
+                
+                gsap.to(card, {
+                    rotationX: rotateX,
+                    rotationY: rotateY,
+                    scale: 1.05,
+                    z: 50,
+                    boxShadow: '0 30px 40px -10px rgba(0, 0, 0, 0.3), 0 15px 15px -10px rgba(0, 0, 0, 0.1)',
+                    duration: 0.4,
+                    ease: 'power3.out'
+                });
+            });
+
+            card.addEventListener('mouseleave', () => {
+                if (activeIndex.value !== index) return;
+                
+                gsap.to(card, {
+                    rotationX: 0,
+                    rotationY: 0,
+                    scale: 1,
+                    z: 0,
+                    boxShadow: 'none',
+                    duration: 0.6,
+                    ease: 'elastic.out(1, 0.3)'
+                });
+            });
+        });
     }
     
     startAutoSlide();
@@ -151,7 +233,7 @@ onUnmounted(() => {
 <template>
     <Head title="Welcome">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
     </Head>
     
@@ -247,16 +329,14 @@ onUnmounted(() => {
                  @mouseleave="isHovering = false"
             >
                 <div class="w-full overflow-hidden absolute right-0 bottom-16" style="mask-image: linear-gradient(to right, transparent, black 10%, black 75%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 75%, transparent);">
-                    <div ref="carouselRef" class="flex gap-5 px-4 lg:pl-[10%] w-max transition-transform border-l border-transparent">
+                    <div ref="carouselRef" class="flex gap-5 px-4 lg:pl-[10%] w-max border-l border-transparent">
                         <div 
                             v-for="(card, index) in cards" 
                             :key="card.id"
-                            class="carousel-item relative w-[220px] h-[280px] rounded-[24px] p-6 flex flex-col justify-between overflow-hidden shadow-sm bg-gradient-to-br border border-sidebar-border/70 shrink-0 transform-gpu cursor-pointer"
+                            class="carousel-item relative w-[220px] h-[280px] rounded-[24px] p-6 flex flex-col justify-between overflow-hidden shadow-sm bg-gradient-to-br border border-sidebar-border/70 shrink-0 cursor-pointer"
                             :class="[
                                 card.color,
-                                activeIndex === index ? 'opacity-100 scale-100 shadow-xl' : 'opacity-60 scale-[0.9] hover:opacity-100'
                             ]"
-                            style="transition: opacity 0.5s ease-out, transform 0.5s ease-out, box-shadow 0.5s ease-out;"
                             @click="activeIndex = index; animateCarousel()"
                         >
                             <!-- Glassmorphism overlay to match Dashboard cards exactly -->

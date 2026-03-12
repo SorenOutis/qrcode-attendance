@@ -126,7 +126,7 @@ async function submitStudent() {
         },
         {
             onError: (errors) => {
-                formErrors.value = errors;
+                formErrors.value = errors as any;
             },
             onSuccess: () => {
                 closeCreateModal();
@@ -217,7 +217,7 @@ async function submitEditStudent() {
         },
         {
             onError: (errors) => {
-                formErrors.value = errors;
+                formErrors.value = errors as any;
             },
             onSuccess: () => {
                 closeEditModal();
@@ -437,31 +437,56 @@ onMounted(() => {
     // 1. Enter and Hover Animations for Cards
     if (cardsRef.value) {
         const cards = cardsRef.value.querySelectorAll<HTMLElement>('[data-card]');
+        
+        // Wrap with a perspective container
+        gsap.set(cardsRef.value, { perspective: 1000 });
+
         gsap.from(cards, {
             opacity: 0,
-            y: 40,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: 'expo.out',
+            y: 50,
+            rotationX: -45,
+            z: -100,
+            duration: 1,
+            stagger: 0.15,
+            ease: 'back.out(1.5)',
         });
         
         cards.forEach((card) => {
-            card.addEventListener('mouseenter', () => {
+            gsap.set(card, { transformStyle: "preserve-3d" });
+
+            card.addEventListener('mousemove', (e: MouseEvent) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+                
                 gsap.to(card, {
-                    scale: 1.02,
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                    y: -5,
+                    rotationX: rotateX,
+                    rotationY: rotateY,
+                    scale: 1.05,
+                    z: 30,
+                    zIndex: 50,
+                    boxShadow: '0 30px 40px -10px rgba(0, 0, 0, 0.3), 0 15px 15px -10px rgba(0, 0, 0, 0.1)',
                     duration: 0.4,
                     ease: 'power3.out'
                 });
             });
+
             card.addEventListener('mouseleave', () => {
                 gsap.to(card, {
+                    rotationX: 0,
+                    rotationY: 0,
                     scale: 1,
+                    z: 0,
+                    zIndex: 0,
                     boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-                    y: 0,
                     duration: 0.6,
-                    ease: 'expo.out'
+                    ease: 'elastic.out(1, 0.3)'
                 });
             });
         });
@@ -469,21 +494,29 @@ onMounted(() => {
 
     // 2. Table and Row Entrance
     if (tableRef.value) {
+        gsap.set(tableRef.value, { perspective: 1000 });
+
         gsap.from(tableRef.value, {
             opacity: 0,
-            y: 30,
-            duration: 0.9,
-            delay: 0.3,
-            ease: 'expo.out',
+            y: 40,
+            rotationX: 20,
+            z: -50,
+            duration: 1,
+            delay: 0.2,
+            ease: 'power3.out',
         });
         
         const rows = tableRef.value.querySelectorAll('tbody tr');
+        rows.forEach(row => gsap.set(row, { transformStyle: "preserve-3d" }));
+
         gsap.from(rows, {
             opacity: 0,
             x: -20,
+            rotationY: 15,
+            z: -20,
             duration: 0.6,
             stagger: 0.05,
-            delay: 0.5,
+            delay: 0.4,
             ease: 'power2.out',
         });
     }
@@ -491,14 +524,15 @@ onMounted(() => {
     // 3. Button Press Micro-interactions
     const buttons = document.querySelectorAll('button');
     buttons.forEach((btn) => {
+        gsap.set(btn, { transformStyle: "preserve-3d" });
         btn.addEventListener('mousedown', () => {
-            gsap.to(btn, { scale: 0.95, duration: 0.1, ease: 'power1.out' });
+            gsap.to(btn, { scale: 0.95, z: -10, duration: 0.1, ease: 'power1.out' });
         });
         btn.addEventListener('mouseup', () => {
-            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'bounce.out' });
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'bounce.out' });
         });
         btn.addEventListener('mouseleave', () => {
-            gsap.to(btn, { scale: 1, duration: 0.3, ease: 'power1.out' });
+            gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
         });
     });
 });
