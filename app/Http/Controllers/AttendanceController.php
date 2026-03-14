@@ -6,11 +6,12 @@ use App\Models\Attendance;
 use App\Models\Student;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
 {
-    public function update(Request $request, Attendance $attendance): JsonResponse
+    public function update(Request $request, Attendance $attendance): RedirectResponse
     {
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:Present,Late,Time Out,Absent'],
@@ -20,13 +21,7 @@ class AttendanceController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return response()->json([
-            'attendance' => [
-                'id' => $attendance->id,
-                'status' => $attendance->status,
-                'scanned_at' => $attendance->scanned_at,
-            ],
-        ]);
+        return redirect()->back();
     }
 
     public function scan(Request $request): JsonResponse
