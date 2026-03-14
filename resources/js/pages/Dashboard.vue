@@ -11,7 +11,7 @@ import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Scan, CheckCircle2, AlertCircle } from 'lucide-vue-next';
+import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus } from 'lucide-vue-next';
 import {
     Dialog,
     DialogClose,
@@ -67,6 +67,27 @@ const breadcrumbs: BreadcrumbItem[] = [
 const page = usePage();
 
 const students = computed(() => props.students ?? []);
+const searchQuery = ref('');
+
+const filteredStudents = computed(() => {
+    if (!searchQuery.value) return students.value;
+    const q = searchQuery.value.toLowerCase();
+    return students.value.filter(s => 
+        s.name.toLowerCase().includes(q) || 
+        s.student_number.toLowerCase().includes(q) ||
+        (s.section && s.section.toLowerCase().includes(q))
+    );
+});
+
+const filteredTrashedStudents = computed(() => {
+    if (!searchQuery.value) return props.trashedStudents ?? [];
+    const q = searchQuery.value.toLowerCase();
+    return (props.trashedStudents ?? []).filter(s => 
+        s.name.toLowerCase().includes(q) || 
+        s.student_number.toLowerCase().includes(q) ||
+        (s.section && s.section.toLowerCase().includes(q))
+    );
+});
 
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
@@ -798,7 +819,10 @@ onMounted(() => {
                                 Total Students
                             </p>
                             <p class="mt-1 text-4xl font-bold tracking-tight">
-                                {{ students.length }}
+                                {{ searchQuery ? filteredStudents.length : students.length }}
+                            </p>
+                            <p v-if="searchQuery" class="text-[10px] text-muted-foreground mt-0.5">
+                                matching "{{ searchQuery }}"
                             </p>
                         </div>
                         <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -828,9 +852,9 @@ onMounted(() => {
                 ref="tableRef"
                 class="glass-card relative flex-1 overflow-hidden rounded-2xl shadow-sm md:min-h-min"
             >
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b p-4 gap-4">
+                <div class="flex flex-col border-b p-4 gap-4">
                     <div class="flex items-center gap-4">
-                        <div class="flex rounded-lg bg-muted/50 p-1">
+                        <div class="flex rounded-lg bg-muted/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
                             <button
                                 class="rounded-md px-3 py-1 text-xs font-medium transition-all"
                                 :class="activeTab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
@@ -847,9 +871,27 @@ onMounted(() => {
                             </button>
                         </div>
                     </div>
-                    <Button size="sm" class="rounded-full" @click="openCreateModal" v-if="activeTab === 'active'">
-                        Add student
-                    </Button>
+
+                    <div class="flex items-center gap-2 w-full">
+                        <div class="relative flex-1">
+                            <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                v-model="searchQuery"
+                                type="search"
+                                placeholder="Search students..."
+                                class="pl-9 h-9 text-xs rounded-full bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/50"
+                            />
+                        </div>
+                        <Button 
+                            v-if="activeTab === 'active'"
+                            size="sm" 
+                            class="rounded-full shrink-0 gap-1.5" 
+                            @click="openCreateModal"
+                        >
+                            <Plus class="h-4 w-4" />
+                            <span class="hidden sm:inline">Add Student</span>
+                        </Button>
+                    </div>
                 </div>
 
                 <div class="max-h-[520px] overflow-x-auto overflow-y-auto w-full">
@@ -887,22 +929,27 @@ onMounted(() => {
                         </thead>
                         <tbody>
                             <tr
-                                v-if="students.length === 0"
+                                v-if="(activeTab === 'active' ? filteredStudents : filteredTrashedStudents).length === 0"
                                 class="border-b last:border-b-0"
                             >
                                 <td
                                     colspan="9"
                                     class="px-4 py-6 text-center text-xs text-muted-foreground"
                                 >
-                                    No students yet. Use the
-                                    <span class="font-semibold">
-                                        Add student
+                                    <span v-if="searchQuery">
+                                        No students matching "{{ searchQuery }}"
                                     </span>
-                                    button to create one.
+                                    <span v-else>
+                                        No students yet. Use the
+                                        <span class="font-semibold">
+                                            Add student
+                                        </span>
+                                        button to create one.
+                                    </span>
                                 </td>
                             </tr>
                             <tr
-                                v-for="student in (activeTab === 'active' ? students : props.trashedStudents)"
+                                v-for="student in (activeTab === 'active' ? filteredStudents : filteredTrashedStudents)"
                                 :key="student.id"
                                 class="border-b transition-colors hover:bg-muted/40 last:border-b-0 cursor-pointer"
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
