@@ -146,6 +146,12 @@ const groupedAttendanceHistory = computed(() => {
     return groups;
 });
 
+const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+function isScheduledForToday(student: Student) {
+    return student.schedule?.some(s => s.day === todayDayName) ?? false;
+}
+
 const name = ref('');
 const studentNumber = ref('');
 const email = ref('');
@@ -908,8 +914,9 @@ onMounted(() => {
                                             v-if="activeTab === 'active'"
                                             class="h-1.5 w-1.5 rounded-full status-pulse"
                                             :class="[
-                                                student.latest_attendance?.status === 'Present' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
-                                                student.latest_attendance?.status === 'Late'    ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]' :
+                                                student.latest_attendance?.status === 'Present'  ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
+                                                student.latest_attendance?.status === 'Late'     ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]' :
+                                                student.latest_attendance?.status === 'Time Out' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]' :
                                                 'bg-muted-foreground/30'
                                             ]"
                                         ></div>
@@ -950,9 +957,9 @@ onMounted(() => {
                                         </span>
                                         <span v-else class="inline-block w-4 h-px bg-muted-foreground/20"></span>
                                     </td>
-                                    <!-- Absent: show when no scans today, or explicitly marked Absent -->
-                                    <td class="px-4 py-2 text-center" @click.stop>
-                                        <span v-if="!student.today_statuses?.length || student.today_statuses?.includes('Absent')"
+                                    <!-- Absent: show when scheduled today and no scans today, or explicitly marked Absent -->
+                                    <td class="px-4 py-2 text-center" @click.stop v-if="activeTab === 'active'">
+                                        <span v-if="(isScheduledForToday(student) && (!student.today_statuses || student.today_statuses.length === 0)) || student.today_statuses?.includes('Absent')"
                                             class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-rose-100 dark:bg-rose-900/40"
                                             title="Absent"
                                         >

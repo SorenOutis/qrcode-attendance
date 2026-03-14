@@ -95,22 +95,28 @@ class AttendanceController extends Controller
 
         $graceMinutes = 15;
 
-        // Check if there is already an attendance for this slot today
-        $existing = Attendance::query()
+        // Count existing attendance for this student today
+        $dailyRecords = Attendance::query()
             ->where('student_id', $student->id)
             ->whereDate('scanned_at', $date)
-            ->where('slot_index', $slotIndex)
             ->orderBy('scanned_at')
             ->get();
 
-        if ($existing->isEmpty()) {
+        if ($dailyRecords->count() >= 2) {
+            return response()->json([
+                'message' => "You have already completed your attendance for today. You cannot be scanned again until the next day.",
+            ], 422);
+        }
+
+        if ($dailyRecords->isEmpty()) {
+            // First scan of the day
             if ($now->lessThanOrEqualTo($start->addMinutes($graceMinutes))) {
                 $status = 'Present';
             } else {
                 $status = 'Late';
             }
         } else {
-            // Any subsequent scan for the same slot is treated as time out
+            // Second scan of the day
             $status = 'Time Out';
         }
 
