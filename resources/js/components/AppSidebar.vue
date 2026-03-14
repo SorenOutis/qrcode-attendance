@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, MessagesSquare, Star } from 'lucide-vue-next';
+import { BookOpen, ChartBar, FolderGit2, LayoutGrid, MessagesSquare, Star } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -32,6 +32,11 @@ const mainNavItems: NavItem[] = [
         title: 'Ratings',
         href: '/ratings',
         icon: Star,
+    },
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: ChartBar,
     },
 ];
 

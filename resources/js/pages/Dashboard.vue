@@ -10,6 +10,7 @@ import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Users, Scan, CheckCircle2, AlertCircle } from 'lucide-vue-next';
 import {
     Dialog,
     DialogClose,
@@ -44,6 +45,7 @@ type Student = {
 
 type PageProps = {
     students: Student[];
+    trashedStudents: Student[];
 };
 
 const props = defineProps<PageProps>();
@@ -62,6 +64,7 @@ const students = computed(() => props.students ?? []);
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
 const scanModalOpen = ref(false);
+const activeTab = ref<'active' | 'deleted'>('active');
 const selectedStudent = ref<Student | null>(null);
 const qrModalOpen = ref(false);
 
@@ -102,6 +105,30 @@ const lastScanResult = ref<{
     scanned_at: string;
     status: string;
 } | null>(null);
+const scanFeedback = ref<'success' | 'error' | null>(null);
+const scanResultModalOpen = ref(false);
+
+const confirmModalOpen = ref(false);
+const confirmTitle = ref('');
+const confirmDescription = ref('');
+const confirmAction = ref<(() => void) | null>(null);
+const confirmIsDestructive = ref(false);
+
+function showConfirm(title: string, description: string, action: () => void, isDestructive = false) {
+    confirmTitle.value = title;
+    confirmDescription.value = description;
+    confirmAction.value = action;
+    confirmIsDestructive.value = isDestructive;
+    confirmModalOpen.value = true;
+}
+
+function handleConfirm() {
+    if (confirmAction.value) {
+        confirmAction.value();
+    }
+    confirmModalOpen.value = false;
+    confirmAction.value = null;
+}
 let scanInterval: number | null = null;
 let mediaStream: MediaStream | null = null;
 
@@ -158,6 +185,41 @@ function addScheduleSlot() {
 function removeScheduleSlot(index: number) {
     if (schedules.value.length === 1) return;
     schedules.value.splice(index, 1);
+}
+
+function deleteStudent(id: number) {
+    showConfirm(
+        'Delete Student?',
+        'Are you sure you want to move this student to the Trash? You can restore them later.',
+        () => {
+            router.delete(`/students/${id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    closeStudentInfoModal();
+                }
+            });
+        },
+        true
+    );
+}
+
+function restoreStudent(id: number) {
+    router.post(`/students/${id}/restore`, {}, {
+        preserveScroll: true,
+    });
+}
+
+function forceDeleteStudent(id: number) {
+    showConfirm(
+        'Permanently Delete?',
+        'This will permanently delete the student and all their records. This action cannot be undone. Are you sure?',
+        () => {
+            router.delete(`/students/${id}/force-delete`, {
+                preserveScroll: true,
+            });
+        },
+        true
+    );
 }
 
 function openStudentInfoModal(student: Student) {
@@ -377,6 +439,15 @@ async function openScanModal() {
 function closeScanModal() {
     stopCamera();
     scanModalOpen.value = false;
+    // Don't auto-reset scanResultModalOpen here so users can read the status
+}
+
+function closeScanResultModal() {
+    scanResultModalOpen.value = false;
+    // When closing result, if scanner is still open, resume it
+    if (scanModalOpen.value && mediaStream) {
+        startScanningLoop();
+    }
 }
 
 async function startCamera() {
@@ -484,11 +555,17 @@ function startScanningLoop() {
                 status: data.attendance.status,
             };
             scanError.value = null;
+            scanFeedback.value = 'success';
+            scanResultModalOpen.value = true;
+            setTimeout(() => { scanFeedback.value = null; }, 1500);
         } catch (error) {
             scanError.value =
                 error instanceof Error
                     ? error.message
                     : 'Failed to record attendance.';
+            scanFeedback.value = 'error';
+            scanResultModalOpen.value = true;
+            setTimeout(() => { scanFeedback.value = null; }, 1500);
         }
     }, 400);
 }
@@ -571,15 +648,24 @@ onMounted(() => {
 
         gsap.from(rows, {
             opacity: 0,
-            x: -20,
-            rotationY: 15,
-            z: -20,
-            duration: 0.6,
-            stagger: 0.05,
-            delay: 0.4,
-            ease: 'power2.out',
+            x: -30,
+            filter: 'blur(10px)',
+            duration: 0.8,
+            stagger: 0.04,
+            delay: 0.3,
+            ease: 'expo.out',
         });
     }
+
+    // 3. Status Badge Pulsing
+    gsap.to('.status-pulse', {
+        scale: 1.05,
+        opacity: 0.8,
+        duration: 1.5,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut'
+    });
 
     // 3. Button Press Micro-interactions
     const buttons = document.querySelectorAll('button');
@@ -605,62 +691,41 @@ onMounted(() => {
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
             <div
                 ref="cardsRef"
-                class="grid auto-rows-min gap-4 grid-cols-2 md:grid-cols-3"
+                class="grid auto-rows-min gap-4 grid-cols-2 lg:grid-cols-4"
             >
                 <div
                     data-card
-                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-primary/10 via-background to-background p-4 shadow-sm dark:border-sidebar-border"
+                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
                 >
                     <div class="flex items-center justify-between">
                         <div>
                             <p
-                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80"
                             >
-                                Total students
+                                Total Students
                             </p>
-                            <p class="mt-2 text-3xl font-semibold">
+                            <p class="mt-1 text-4xl font-bold tracking-tight">
                                 {{ students.length }}
                             </p>
                         </div>
-                    </div>
-                </div>
-
-                <div
-                    data-card
-                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-emerald-500/10 via-background to-background p-4 shadow-sm dark:border-sidebar-border"
-                >
-                    <div class="flex h-full flex-col justify-between gap-3">
-                        <div>
-                            <p
-                                class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                            >
-                                Actions
-                            </p>
-                            <p class="mt-2 text-sm text-muted-foreground">
-                                Quickly manage students.
-                            </p>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <Button size="sm" @click="openCreateModal">
-                                Add student
-                            </Button>
+                        <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users class="h-5 w-5 text-primary" />
                         </div>
                     </div>
                 </div>
 
                 <div
                     data-card
-                    class="relative overflow-hidden rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-indigo-500/10 via-background to-background p-4 shadow-sm dark:border-sidebar-border col-span-2 md:col-span-1"
+                    class="glass-card relative overflow-hidden rounded-2xl p-5 shadow-sm col-span-2 lg:col-span-3"
                 >
-                    <div class="flex h-full flex-col justify-center gap-2">
+                    <div class="flex h-full flex-col justify-center gap-1">
                         <p
-                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                            class="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80"
                         >
-                            Hint
+                            Security & Registry
                         </p>
-                        <p class="text-sm text-muted-foreground">
-                            Each student gets a unique QR code based on a
-                            secure token. You can regenerate it anytime.
+                        <p class="text-[11px] leading-relaxed text-muted-foreground">
+                            Encrypted QR tokens ensure data integrity. Total Active: {{ students.length }} | Trashed: {{ props.trashedStudents.length }}
                         </p>
                     </div>
                 </div>
@@ -668,19 +733,28 @@ onMounted(() => {
 
             <div
                 ref="tableRef"
-                class="relative flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 bg-background/60 shadow-sm backdrop-blur md:min-h-min dark:border-sidebar-border"
+                class="glass-card relative flex-1 overflow-hidden rounded-2xl shadow-sm md:min-h-min"
             >
-                <div class="flex items-center justify-between border-b p-4">
-                    <div>
-                        <h2 class="text-base font-semibold">
-                            Students
-                        </h2>
-                        <p class="text-xs text-muted-foreground">
-                            Click a student row to view and download their QR
-                            code.
-                        </p>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b p-4 gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="flex rounded-lg bg-muted/50 p-1">
+                            <button
+                                class="rounded-md px-3 py-1 text-xs font-medium transition-all"
+                                :class="activeTab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                @click="activeTab = 'active'"
+                            >
+                                Active Students
+                            </button>
+                            <button
+                                class="rounded-md px-3 py-1 text-xs font-medium transition-all"
+                                :class="activeTab === 'deleted' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                @click="activeTab = 'deleted'"
+                            >
+                                Deleted Students ({{ props.trashedStudents.length }})
+                            </button>
+                        </div>
                     </div>
-                    <Button size="sm" @click="openCreateModal">
+                    <Button size="sm" class="rounded-full" @click="openCreateModal" v-if="activeTab === 'active'">
                         Add student
                     </Button>
                 </div>
@@ -728,21 +802,29 @@ onMounted(() => {
                                 </td>
                             </tr>
                             <tr
-                                v-for="student in students"
+                                v-for="student in (activeTab === 'active' ? students : props.trashedStudents)"
                                 :key="student.id"
                                 class="border-b transition-colors hover:bg-muted/40 last:border-b-0 cursor-pointer"
-                                @click="openStudentInfoModal(student)"
+                                @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
                             >
                                 <td class="px-4 py-2 text-sm font-medium">
                                     <span class="flex items-center gap-1.5">
                                         {{ student.name }}
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground opacity-60"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                        <div 
+                                            v-if="activeTab === 'active'"
+                                            class="h-1.5 w-1.5 rounded-full status-pulse"
+                                            :class="[
+                                                student.latest_attendance?.status === 'Present' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' :
+                                                student.latest_attendance?.status === 'Late'    ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]' :
+                                                'bg-muted-foreground/30'
+                                            ]"
+                                        ></div>
                                     </span>
                                 </td>
                                 <td class="px-4 py-2 text-xs text-muted-foreground">
                                     {{ student.student_number }}
                                 </td>
-                                <td class="px-4 py-2" @click.stop>
+                                <td class="px-4 py-2" @click.stop v-if="activeTab === 'active'">
                                     <div class="flex flex-col gap-1">
                                         <div class="flex items-center gap-2">
                                             <span
@@ -793,11 +875,24 @@ onMounted(() => {
                                         </span>
                                     </div>
                                 </td>
+                                <td class="px-4 py-2" @click.stop v-else>
+                                    <div class="flex items-center gap-2">
+                                        <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" title="Restore" @click="restoreStudent(student.id)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                                        </Button>
+                                        <Button size="icon-sm" variant="ghost" class="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50" title="Delete Permanently" @click="forceDeleteStudent(student.id)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                        </Button>
+                                    </div>
+                                </td>
                                 <td class="px-4 py-2 text-xs text-muted-foreground">
                                     {{ student.section || '—' }}
                                 </td>
-                                <td class="px-4 py-2 text-xs text-muted-foreground">
+                                <td class="px-4 py-2 text-xs text-muted-foreground" v-if="activeTab === 'active'">
                                     {{ student.email || '—' }}
+                                </td>
+                                <td class="px-4 py-2 text-xs text-rose-500 font-medium" v-else>
+                                    Deleted {{ formatDateTime(student.deleted_at!) }}
                                 </td>
                                 <!-- <td class="px-4 py-2 text-right text-xs text-muted-foreground" @click.stop>
                                     <button
@@ -1086,12 +1181,11 @@ onMounted(() => {
                     </div>
 
                     <DialogFooter class="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-                        <div class="flex gap-2 w-full sm:w-auto">
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                class="flex-1 sm:flex-none"
                                 @click="openEditFromInfo"
                             >
                                 Edit student
@@ -1100,11 +1194,20 @@ onMounted(() => {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                class="flex-1 sm:flex-none"
                                 @click="openQrFromInfo"
                             >
                                 View QR
                             </Button>
+                                <Button
+                                    v-if="infoStudent"
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    class="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300"
+                                    @click="deleteStudent(infoStudent.id)"
+                                >
+                                    Delete
+                                </Button>
                         </div>
                         <Button
                             type="button"
@@ -1342,7 +1445,7 @@ onMounted(() => {
 
                     <div class="space-y-3">
                         <div
-                            class="overflow-hidden rounded-lg border bg-black/80"
+                            class="relative overflow-hidden rounded-lg border bg-black/80"
                         >
                             <video
                                 ref="videoRef"
@@ -1350,6 +1453,21 @@ onMounted(() => {
                                 playsinline
                                 muted
                             ></video>
+
+                            <!-- Scanner Overlay -->
+                            <div 
+                                v-if="scanning"
+                                class="absolute inset-0 pointer-events-none border-2 border-emerald-500/30 transition-all duration-300"
+                                :class="{
+                                    'border-emerald-500 scale-[1.02] bg-emerald-500/10': scanFeedback === 'success',
+                                    'border-rose-500 scale-[1.02] bg-rose-500/10': scanFeedback === 'error',
+                                }"
+                            >
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <CheckCircle2 v-if="scanFeedback === 'success'" class="h-12 w-12 text-emerald-500 animate-in zoom-in duration-300" />
+                                    <AlertCircle v-if="scanFeedback === 'error'" class="h-12 w-12 text-rose-500 animate-in zoom-in duration-300" />
+                                </div>
+                            </div>
                         </div>
 
                         <p class="text-xs text-muted-foreground">

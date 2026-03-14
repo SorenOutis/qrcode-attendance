@@ -383,7 +383,7 @@ onUnmounted(() => {
                             <div 
                                 class="absolute top-0 bottom-0 left-0 bg-primary/10 transition-all pointer-events-none flex items-center justify-center"
                                 :style="{ width: isHovering ? '0%' : '100%' }"
-                                style="transition: width 4.5s linear;"
+                                style="transition: width 1s linear;"
                                 :key="activeIndex"
                             ></div>
                             <svg class="relative z-10" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>

@@ -30,6 +30,20 @@ class StudentController extends Controller
                 'created_at',
             ]);
 
+        $trashedStudents = Student::onlyTrashed()
+            ->orderBy('name')
+            ->get([
+                'id',
+                'name',
+                'student_number',
+                'email',
+                'section',
+                'qr_token',
+                'schedule',
+                'created_at',
+                'deleted_at',
+            ]);
+
         $latestByStudent = Attendance::query()
             ->whereDate('scanned_at', $date)
             ->orderByDesc('scanned_at')
@@ -37,7 +51,7 @@ class StudentController extends Controller
             ->groupBy('student_id')
             ->map(fn ($items) => $items->first());
 
-        $students = $students->map(function ($student) use ($latestByStudent) {
+        $mapStudent = function ($student) use ($latestByStudent) {
             $latest = $latestByStudent->get($student->id);
 
             return [
@@ -49,6 +63,7 @@ class StudentController extends Controller
                 'qr_token' => $student->qr_token,
                 'schedule' => $student->schedule,
                 'created_at' => $student->created_at,
+                'deleted_at' => $student->deleted_at,
                 'latest_attendance' => $latest
                     ? [
                         'id' => $latest->id,
@@ -57,11 +72,47 @@ class StudentController extends Controller
                     ]
                     : null,
             ];
-        });
+        };
 
         return Inertia::render('Dashboard', [
-            'students' => $students,
+            'students'        => $students->map($mapStudent),
+            'trashedStudents' => $trashedStudents->map($mapStudent),
         ]);
+    }
+
+    public function destroy(Student $student)
+    {
+        $student->delete();
+
+        return redirect()
+            ->back()
+            ->with('flash', [
+                'student_deleted' => true,
+            ]);
+    }
+
+    public function restore($id)
+    {
+        $student = Student::withTrashed()->findOrFail($id);
+        $student->restore();
+
+        return redirect()
+            ->back()
+            ->with('flash', [
+                'student_restored' => true,
+            ]);
+    }
+
+    public function forceDelete($id)
+    {
+        $student = Student::withTrashed()->findOrFail($id);
+        $student->forceDelete();
+
+        return redirect()
+            ->back()
+            ->with('flash', [
+                'student_permanently_deleted' => true,
+            ]);
     }
 
     public function store(Request $request)

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\RatingController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StudentController;
 use App\Models\Comment;
 use App\Models\Rating;
@@ -26,6 +27,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('students', [StudentController::class, 'store'])->name('students.store');
     Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');
+    Route::delete('students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
+    Route::post('students/{id}/restore', [StudentController::class, 'restore'])->name('students.restore');
+    Route::delete('students/{id}/force-delete', [StudentController::class, 'forceDelete'])->name('students.force-delete');
     Route::post('students/{student}/qr/regenerate', [StudentController::class, 'regenerateQr'])->name('students.qr.regenerate');
     Route::get('students/{student}/attendance', [StudentController::class, 'attendance'])->name('students.attendance');
 
@@ -39,6 +43,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('ratings', [RatingController::class, 'index'])->name('ratings.index');
     Route::put('ratings/{rating}', [RatingController::class, 'update'])->name('ratings.update');
     Route::delete('ratings/{rating}', [RatingController::class, 'destroy'])->name('ratings.destroy');
+
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('api/reports/stats', [ReportController::class, 'stats'])->name('api.reports.stats');
+    Route::get('reports/export', [ReportController::class, 'exportCsv'])->name('reports.export');
 });
 
 require __DIR__.'/settings.php';
