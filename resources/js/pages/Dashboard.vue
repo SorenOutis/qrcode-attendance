@@ -2,6 +2,7 @@
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
 import { nextTick } from 'vue';
+import { useDraggable, useWindowSize } from '@vueuse/core';
 import gsap from 'gsap';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
@@ -79,6 +80,47 @@ const infoStudent = ref<Student | null>(null);
 const attendanceHistory = ref<AttendanceRecord[]>([]);
 const historyExpanded = ref(false);
 const historyLoading = ref(false);
+
+const el = ref<HTMLElement | null>(null);
+const { width: windowWidth, height: windowHeight } = useWindowSize();
+
+const { x, y, isDragging } = useDraggable(el, {
+  initialValue: { x: window.innerWidth - 100, y: window.innerHeight - 100 },
+  preventDefault: true,
+  onEnd: () => {
+      // Chathead snapping logic: snap to nearest left/right edge
+      const margin = 20;
+      const buttonWidth = 100;
+      const threshold = windowWidth.value / 2;
+      
+      if (x.value < threshold) {
+          x.value = margin;
+      } else {
+          x.value = windowWidth.value - buttonWidth - margin;
+      }
+  }
+});
+
+// Boundary and resize handling
+watch([windowWidth, windowHeight], ([newW, newH]) => {
+    // Keep within viewport with margins
+    const margin = 20;
+    const buttonWidth = 100;
+    const buttonHeight = 56;
+    
+    if (x.value > newW - buttonWidth - margin) x.value = newW - buttonWidth - margin;
+    if (x.value < margin) x.value = margin;
+    if (y.value > newH - buttonHeight - margin) y.value = newH - buttonHeight - margin;
+    if (y.value < margin) y.value = margin;
+}, { immediate: true });
+
+const handleScanClick = () => {
+    // If it was just a tiny move, we can treat it as a click
+    // But useDraggable is pretty good at this. 
+    // We'll just check isDragging.
+    if (isDragging.value) return;
+    openScanModal();
+};
 
 // Group attendance records by local date (most-recent date first)
 const groupedAttendanceHistory = computed(() => {
@@ -1646,11 +1688,20 @@ onMounted(() => {
         </div>
 
         <!-- Floating Scan Widget -->
-        <div class="fixed bottom-6 right-6 z-50">
+        <div 
+            ref="el"
+            class="fixed z-50 select-none touch-none transition-[left,top] duration-300 ease-out"
+            :class="{ 'transition-none': isDragging }"
+            :style="{ 
+                left: `${x}px`, 
+                top: `${y}px`,
+                cursor: isDragging ? 'grabbing' : 'grab'
+            }"
+        >
             <Button
                 size="lg"
-                class="group h-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 pr-6 pl-5 dark:shadow-[0_8px_30px_rgb(255,255,255,0.1)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.15)] bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0"
-                @click="openScanModal"
+                class="group h-14 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] flex items-center gap-2 pr-6 pl-5 dark:shadow-[0_8px_30px_rgb(255,255,255,0.1)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.15)] bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0 transition-transform active:scale-95"
+                @click="handleScanClick"
             >
                 <div class="relative flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
