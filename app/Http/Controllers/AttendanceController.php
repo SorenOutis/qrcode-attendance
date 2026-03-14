@@ -39,16 +39,18 @@ class AttendanceController extends Controller
         }
 
         $now = CarbonImmutable::now();
+        $dayOfWeek = $now->format('l'); // Monday, Tuesday, etc.
         $date = $now->toDateString();
         $time = $now->format('H:i');
 
         $schedule = collect($student->schedule ?? [])
-            ->filter(fn ($slot) => isset($slot['start'], $slot['end']))
+            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
+            ->filter(fn ($slot) => $slot['day'] === $dayOfWeek)
             ->values();
 
         if ($schedule->isEmpty()) {
             return response()->json([
-                'message' => 'No schedule configured for this student.',
+                'message' => "No schedule configured for {$student->name} today ($dayOfWeek).",
             ], 422);
         }
 

@@ -131,15 +131,17 @@ class StudentController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'section' => ['nullable', 'string', 'max:255'],
             'schedule' => ['required', 'array', 'min:1'],
+            'schedule.*.day' => ['required', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
             'schedule.*.start' => ['required', 'date_format:H:i'],
             'schedule.*.end' => ['required', 'date_format:H:i'],
         ]);
 
         // Ensure each slot has start < end
         $data['schedule'] = collect($data['schedule'])
-            ->filter(fn ($slot) => isset($slot['start'], $slot['end']))
+            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
             ->map(function ($slot) {
                 return [
+                    'day' => $slot['day'],
                     'start' => $slot['start'],
                     'end' => $slot['end'],
                 ];
@@ -172,14 +174,16 @@ class StudentController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'section' => ['nullable', 'string', 'max:255'],
             'schedule' => ['required', 'array', 'min:1'],
+            'schedule.*.day' => ['required', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
             'schedule.*.start' => ['required', 'date_format:H:i'],
             'schedule.*.end' => ['required', 'date_format:H:i'],
         ]);
 
         $data['schedule'] = collect($data['schedule'])
-            ->filter(fn ($slot) => isset($slot['start'], $slot['end']))
+            ->filter(fn ($slot) => isset($slot['day'], $slot['start'], $slot['end']))
             ->map(function ($slot) {
                 return [
+                    'day' => $slot['day'],
                     'start' => $slot['start'],
                     'end' => $slot['end'],
                 ];

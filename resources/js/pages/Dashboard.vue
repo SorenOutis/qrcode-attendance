@@ -35,7 +35,7 @@ type Student = {
     email?: string | null;
     section?: string | null;
     qr_token: string;
-    schedule?: { start: string; end: string }[];
+    schedule?: { day: string; start: string; end: string }[];
     today_statuses?: string[];
     latest_attendance?: {
         id: number;
@@ -44,6 +44,10 @@ type Student = {
     } | null;
     deleted_at?: string | null;
 };
+
+const daysOfWeek = [
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+];
 
 type PageProps = {
     students: Student[];
@@ -76,20 +80,44 @@ const attendanceHistory = ref<AttendanceRecord[]>([]);
 const historyExpanded = ref(false);
 const historyLoading = ref(false);
 
+// Group attendance records by local date (most-recent date first)
+const groupedAttendanceHistory = computed(() => {
+    const groups: { date: string; label: string; records: AttendanceRecord[] }[] = [];
+    const seen = new Map<string, AttendanceRecord[]>();
+
+    const list = historyExpanded.value
+        ? attendanceHistory.value
+        : attendanceHistory.value.slice(0, 10);
+
+    for (const record of list) {
+        const d = new Date(record.scanned_at);
+        const key = d.toLocaleDateString();
+        if (!seen.has(key)) {
+            const isToday = key === new Date().toLocaleDateString();
+            const isYesterday = key === new Date(Date.now() - 86400000).toLocaleDateString();
+            const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : key;
+            seen.set(key, []);
+            groups.push({ date: key, label, records: seen.get(key)! });
+        }
+        seen.get(key)!.push(record);
+    }
+    return groups;
+});
+
 const name = ref('');
 const studentNumber = ref('');
 const email = ref('');
 const section = ref('');
-const schedules = ref<{ start: string; end: string }[]>([
-    { start: '', end: '' },
+const schedules = ref<{ day: string; start: string; end: string }[]>([
+    { day: 'Monday', start: '', end: '' },
 ]);
 
 const editName = ref('');
 const editStudentNumber = ref('');
 const editEmail = ref('');
 const editSection = ref('');
-const editSchedules = ref<{ start: string; end: string }[]>([
-    { start: '', end: '' },
+const editSchedules = ref<{ day: string; start: string; end: string }[]>([
+    { day: 'Monday', start: '', end: '' },
 ]);
 const editingStudentId = ref<number | null>(null);
 
@@ -139,7 +167,7 @@ function resetForm() {
     studentNumber.value = '';
     email.value = '';
     section.value = '';
-    schedules.value = [{ start: '', end: '' }];
+    schedules.value = [{ day: 'Monday', start: '', end: '' }];
     formErrors.value = {};
 }
 
@@ -181,7 +209,7 @@ async function submitStudent() {
 }
 
 function addScheduleSlot() {
-    schedules.value.push({ start: '', end: '' });
+    schedules.value.push({ day: 'Monday', start: '', end: '' });
 }
 
 function removeScheduleSlot(index: number) {
@@ -280,8 +308,8 @@ function openEditModal(student: Student) {
     editSection.value = student.section || '';
     editSchedules.value =
         student.schedule && student.schedule.length > 0
-            ? student.schedule.map((s) => ({ start: s.start, end: s.end }))
-            : [{ start: '', end: '' }];
+            ? student.schedule.map((s) => ({ day: s.day || 'Monday', start: s.start, end: s.end }))
+            : [{ day: 'Monday', start: '', end: '' }];
     formErrors.value = {};
     editModalOpen.value = true;
 }
@@ -316,7 +344,7 @@ function closeEditModal() {
 }
 
 function addEditScheduleSlot() {
-    editSchedules.value.push({ start: '', end: '' });
+    editSchedules.value.push({ day: 'Monday', start: '', end: '' });
 }
 
 function removeEditScheduleSlot(index: number) {
@@ -946,7 +974,7 @@ onMounted(() => {
                                 v-if="formErrors.name"
                                 class="text-xs text-destructive"
                             >
-                                {{ formErrors.name[0] }}
+                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
                             </p>
                         </div>
 
@@ -962,7 +990,7 @@ onMounted(() => {
                                 v-if="formErrors.student_number"
                                 class="text-xs text-destructive"
                             >
-                                {{ formErrors.student_number[0] }}
+                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
                             </p>
                         </div>
 
@@ -976,7 +1004,7 @@ onMounted(() => {
                                     v-if="formErrors.section"
                                     class="text-xs text-destructive"
                                 >
-                                    {{ formErrors.section[0] }}
+                                    {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
                                 </p>
                             </div>
 
@@ -993,7 +1021,7 @@ onMounted(() => {
                                     v-if="formErrors.email"
                                     class="text-xs text-destructive"
                                 >
-                                    {{ formErrors.email[0] }}
+                                    {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
                                 </p>
                             </div>
                         </div>
@@ -1024,12 +1052,18 @@ onMounted(() => {
                                     :key="index"
                                     class="flex items-center gap-2"
                                 >
+                                    <select
+                                        v-model="slot.day"
+                                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <option v-for="d in daysOfWeek" :key="d" :value="d">{{ d }}</option>
+                                    </select>
                                     <Input
                                         v-model="slot.start"
                                         type="time"
                                         class="text-xs"
                                     />
-                                    <span class="text-xs text-muted-foreground">
+                                    <span class="text-xs text-muted-foreground px-1">
                                         to
                                     </span>
                                     <Input
@@ -1048,12 +1082,14 @@ onMounted(() => {
                                     </Button>
                                 </div>
                             </div>
-                            <p
-                                v-if="formErrors.schedule"
-                                class="text-xs text-destructive"
+                            <div
+                                v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
+                                class="mt-2 space-y-1 rounded-md bg-destructive/5 p-2"
                             >
-                                {{ formErrors.schedule[0] }}
-                            </p>
+                                <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[10px] text-destructive leading-tight">
+                                    • {{ Array.isArray(err) ? err[0] : err }}
+                                </p>
+                            </div>
                         </div>
 
                         <DialogFooter class="mt-4 flex justify-end gap-2">
@@ -1123,7 +1159,7 @@ onMounted(() => {
                                         :key="i"
                                         class="rounded-md border px-2 py-0.5 text-[11px] font-mono"
                                     >
-                                        {{ slot.start }} – {{ slot.end }}
+                                        {{ slot.day }}: {{ slot.start }} – {{ slot.end }}
                                     </span>
                                 </div>
                             </div>
@@ -1170,31 +1206,44 @@ onMounted(() => {
                                 No attendance records found.
                             </div>
 
-                            <!-- History list -->
+                            <!-- History list grouped by date -->
                             <div
                                 v-else
-                                :class="['overflow-y-auto rounded-lg border divide-y transition-all', historyExpanded ? 'max-h-64' : '']" 
+                                :class="['overflow-y-auto rounded-lg border transition-all', historyExpanded ? 'max-h-72' : 'max-h-52']"
                             >
-                                <div
-                                    v-for="record in historyExpanded ? attendanceHistory : attendanceHistory.slice(0, 5)"
-                                    :key="record.id"
-                                    class="flex items-center justify-between px-3 py-2 text-xs"
-                                >
-                                    <span class="text-muted-foreground">
-                                        {{ formatDateTime(record.scanned_at) }}
-                                    </span>
-                                    <span
-                                        :class="[
-                                            'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                                            record.status === 'Present' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                                            record.status === 'Late'    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                                            record.status === 'Absent'  ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                                                                          'bg-muted text-muted-foreground'
-                                        ]"
+                                <template v-for="group in groupedAttendanceHistory" :key="group.date">
+                                    <!-- Date header -->
+                                    <div class="sticky top-0 z-10 flex items-center gap-2 bg-muted/80 backdrop-blur px-3 py-1.5 border-b">
+                                        <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                            {{ group.label }}
+                                        </span>
+                                        <span class="ml-auto text-[10px] text-muted-foreground/60">
+                                            {{ group.records.length }} record{{ group.records.length !== 1 ? 's' : '' }}
+                                        </span>
+                                    </div>
+                                    <!-- Records for this date -->
+                                    <div
+                                        v-for="record in group.records"
+                                        :key="record.id"
+                                        class="flex items-center justify-between px-3 py-2 text-xs border-b last:border-b-0"
                                     >
-                                        {{ record.status }}
-                                    </span>
-                                </div>
+                                        <span class="text-muted-foreground">
+                                            {{ new Date(record.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+                                        </span>
+                                        <span
+                                            :class="[
+                                                'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                                                record.status === 'Present'  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                                                record.status === 'Late'     ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                                                record.status === 'Time Out' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' :
+                                                record.status === 'Absent'   ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                                                                               'bg-muted text-muted-foreground'
+                                            ]"
+                                        >
+                                            {{ record.status }}
+                                        </span>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -1261,7 +1310,7 @@ onMounted(() => {
                                 v-if="formErrors.name"
                                 class="text-xs text-destructive"
                             >
-                                {{ formErrors.name[0] }}
+                                {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
                             </p>
                         </div>
 
@@ -1277,7 +1326,7 @@ onMounted(() => {
                                 v-if="formErrors.student_number"
                                 class="text-xs text-destructive"
                             >
-                                {{ formErrors.student_number[0] }}
+                                {{ Array.isArray(formErrors.student_number) ? formErrors.student_number[0] : formErrors.student_number }}
                             </p>
                         </div>
 
@@ -1294,7 +1343,7 @@ onMounted(() => {
                                     v-if="formErrors.section"
                                     class="text-xs text-destructive"
                                 >
-                                    {{ formErrors.section[0] }}
+                                    {{ Array.isArray(formErrors.section) ? formErrors.section[0] : formErrors.section }}
                                 </p>
                             </div>
 
@@ -1311,7 +1360,7 @@ onMounted(() => {
                                     v-if="formErrors.email"
                                     class="text-xs text-destructive"
                                 >
-                                    {{ formErrors.email[0] }}
+                                    {{ Array.isArray(formErrors.email) ? formErrors.email[0] : formErrors.email }}
                                 </p>
                             </div>
                         </div>
@@ -1341,12 +1390,18 @@ onMounted(() => {
                                     :key="index"
                                     class="flex items-center gap-2"
                                 >
+                                    <select
+                                        v-model="slot.day"
+                                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <option v-for="d in daysOfWeek" :key="d" :value="d">{{ d }}</option>
+                                    </select>
                                     <Input
                                         v-model="slot.start"
                                         type="time"
                                         class="text-xs"
                                     />
-                                    <span class="text-xs text-muted-foreground">
+                                    <span class="text-xs text-muted-foreground px-1">
                                         to
                                     </span>
                                     <Input
@@ -1365,12 +1420,14 @@ onMounted(() => {
                                     </Button>
                                 </div>
                             </div>
-                            <p
-                                v-if="formErrors.schedule"
-                                class="text-xs text-destructive"
+                            <div
+                                v-if="Object.keys(formErrors).some(k => k.startsWith('schedule'))"
+                                class="mt-2 space-y-1 rounded-md bg-destructive/5 p-2"
                             >
-                                {{ formErrors.schedule[0] }}
-                            </p>
+                                <p v-for="(err, key) in formErrors" :key="key" v-show="key.startsWith('schedule')" class="text-[10px] text-destructive leading-tight">
+                                    • {{ Array.isArray(err) ? err[0] : err }}
+                                </p>
+                            </div>
                         </div>
 
                         <DialogFooter class="mt-4 flex justify-end gap-2">
