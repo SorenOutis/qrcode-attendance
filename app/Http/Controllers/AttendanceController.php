@@ -110,7 +110,7 @@ class AttendanceController extends Controller
 
         if ($dailyRecords->isEmpty()) {
             // First scan of the day
-            if ($now->lessThanOrEqualTo($start->addMinutes($graceMinutes))) {
+            if ($now->lessThan($start->addMinutes($graceMinutes))) {
                 $status = 'Present';
             } else {
                 $status = 'Late';
@@ -143,6 +143,11 @@ class AttendanceController extends Controller
                 'status' => $attendance->status,
                 'slot_start' => $attendance->slot_start,
                 'slot_end' => $attendance->slot_end,
+            ],
+            'debug' => [
+                'server_now' => $now->toDateTimeString(),
+                'server_timezone' => config('app.timezone'),
+                'php_timezone' => date_default_timezone_get(),
             ],
         ]);
     }
