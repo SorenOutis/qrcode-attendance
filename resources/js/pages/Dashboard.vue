@@ -11,7 +11,8 @@ import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus } from 'lucide-vue-next';
+import { Users, Scan, CheckCircle2, AlertCircle, Search, Plus, LayoutGrid, Table } from 'lucide-vue-next';
+import confetti from 'canvas-confetti';
 import {
     Dialog,
     DialogClose,
@@ -100,6 +101,9 @@ const createModalOpen = ref(false);
 const editModalOpen = ref(false);
 const scanModalOpen = ref(false);
 const activeTab = ref<'active' | 'deleted'>('active');
+const visibleStudents = computed(() => 
+    activeTab.value === 'active' ? filteredStudents.value : filteredTrashedStudents.value
+);
 const selectedStudent = ref<Student | null>(null);
 const qrModalOpen = ref(false);
 
@@ -111,6 +115,15 @@ const historyLoading = ref(false);
 
 const el = ref<HTMLElement | null>(null);
 const { width: windowWidth, height: windowHeight } = useWindowSize();
+
+const viewMode = ref<'table' | 'grid'>('table');
+
+// Automatic switching for mobile
+watch(windowWidth, (newWidth) => {
+    if (newWidth < 768) {
+        viewMode.value = 'grid';
+    }
+}, { immediate: true });
 
 const { x, y, isDragging } = useDraggable(el, {
   initialValue: { x: window.innerWidth - 100, y: window.innerHeight - 100 },
@@ -202,6 +215,53 @@ const formErrors = ref<Record<string, string[]>>({});
 
 const cardsRef = ref<HTMLDivElement | null>(null);
 const tableRef = ref<HTMLDivElement | null>(null);
+const studentsGridRef = ref<HTMLDivElement | null>(null);
+const studentsTableBodyRef = ref<HTMLTableSectionElement | null>(null);
+
+function animateStudents() {
+    nextTick(() => {
+        const targets = viewMode.value === 'grid' 
+            ? studentsGridRef.value?.querySelectorAll('[data-student-card]')
+            : studentsTableBodyRef.value?.querySelectorAll('tr');
+
+        if (!targets || targets.length === 0) return;
+
+        gsap.killTweensOf(targets);
+        
+        if (viewMode.value === 'grid') {
+            gsap.fromTo(targets, 
+                { opacity: 0, y: 30, scale: 0.9, filter: 'blur(8px)' },
+                { 
+                    opacity: 1, 
+                    y: 0, 
+                    scale: 1, 
+                    filter: 'blur(0px)',
+                    duration: 0.6, 
+                    stagger: 0.05, 
+                    ease: 'back.out(1.2)',
+                    clearProps: 'all'
+                }
+            );
+        } else {
+            gsap.fromTo(targets,
+                { opacity: 0, x: -20, filter: 'blur(4px)' },
+                { 
+                    opacity: 1, 
+                    x: 0, 
+                    filter: 'blur(0px)',
+                    duration: 0.5, 
+                    stagger: 0.03, 
+                    ease: 'power2.out',
+                    clearProps: 'all'
+                }
+            );
+        }
+    });
+}
+
+watch([searchQuery, activeTab, viewMode], () => {
+    animateStudents();
+});
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const scanning = ref(false);
@@ -678,6 +738,16 @@ function startScanningLoop() {
             scanError.value = null;
             scanFeedback.value = 'success';
             scanResultModalOpen.value = true;
+            
+            // Trigger Confetti
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#10b981', '#34d399', '#6ee7b7', '#ffffff'],
+                zIndex: 2000
+            });
+
             setTimeout(() => { scanFeedback.value = null; }, 1500);
         } catch (error) {
             scanError.value =
@@ -802,6 +872,9 @@ onMounted(() => {
             gsap.to(btn, { scale: 1, z: 0, duration: 0.3, ease: 'power1.out' });
         });
     });
+
+    // Initial student animation
+    animateStudents();
 });
 </script>
 
@@ -889,6 +962,27 @@ onMounted(() => {
                                 class="pl-9 h-9 text-xs rounded-full bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/50"
                             />
                         </div>
+
+                        <!-- View Switcher -->
+                        <div class="hidden md:flex rounded-full bg-muted/50 p-1 shrink-0">
+                            <button
+                                class="rounded-full p-1.5 transition-all outline-none"
+                                :class="viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                title="Table View"
+                                @click="viewMode = 'table'"
+                            >
+                                <Table class="h-4 w-4" />
+                            </button>
+                            <button
+                                class="rounded-full p-1.5 transition-all outline-none"
+                                :class="viewMode === 'grid' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                                title="Grid View"
+                                @click="viewMode = 'grid'"
+                            >
+                                <LayoutGrid class="h-4 w-4" />
+                            </button>
+                        </div>
+
                         <Button 
                             v-if="activeTab === 'active'"
                             size="sm" 
@@ -901,7 +995,7 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="max-h-[520px] overflow-x-auto overflow-y-auto w-full">
+                <div v-if="viewMode === 'table'" class="max-h-[520px] overflow-x-auto overflow-y-auto w-full">
                     <table class="min-w-full text-left text-sm whitespace-nowrap">
                         <thead
                             class="sticky top-0 z-10 border-b bg-background/80 backdrop-blur"
@@ -934,9 +1028,9 @@ onMounted(() => {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody ref="studentsTableBodyRef">
                             <tr
-                                v-if="(activeTab === 'active' ? filteredStudents : filteredTrashedStudents).length === 0"
+                                v-if="visibleStudents.length === 0"
                                 class="border-b last:border-b-0"
                             >
                                 <td
@@ -956,7 +1050,7 @@ onMounted(() => {
                                 </td>
                             </tr>
                             <tr
-                                v-for="student in (activeTab === 'active' ? filteredStudents : filteredTrashedStudents)"
+                                v-for="student in visibleStudents"
                                 :key="student.id"
                                 class="border-b transition-colors hover:bg-muted/40 last:border-b-0 cursor-pointer"
                                 @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
@@ -1056,6 +1150,86 @@ onMounted(() => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Grid View -->
+                <div v-else class="p-4 max-h-[520px] overflow-y-auto">
+                    <div 
+                        v-if="visibleStudents.length === 0"
+                        class="flex flex-col items-center justify-center py-12 text-muted-foreground"
+                    >
+                        <Search class="h-12 w-12 opacity-20 mb-4" />
+                        <p class="text-sm">No students found.</p>
+                    </div>
+                    <div 
+                        v-else
+                        ref="studentsGridRef"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                    >
+                        <div 
+                            v-for="student in visibleStudents"
+                            :key="student.id"
+                            data-student-card
+                            class="group relative overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:border-primary/30 cursor-pointer"
+                            @click="activeTab === 'active' ? openStudentInfoModal(student) : null"
+                        >
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                                        {{ student.name }}
+                                    </h4>
+                                    <p class="text-[10px] text-muted-foreground font-mono">
+                                        {{ student.student_number }}
+                                    </p>
+                                </div>
+                                <div 
+                                    v-if="activeTab === 'active'"
+                                    class="flex gap-1"
+                                >
+                                    <div 
+                                        v-if="student.today_statuses?.includes('Present')"
+                                        class="h-5 w-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center"
+                                        title="Present"
+                                    >
+                                        <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                    <div 
+                                        v-if="student.today_statuses?.includes('Late')"
+                                        class="h-5 w-5 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center"
+                                        title="Late"
+                                    >
+                                        <svg class="w-3 h-3 text-amber-500 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="bg-muted px-2 py-0.5 rounded-md text-muted-foreground">
+                                    {{ student.section || 'N/A' }}
+                                </span>
+                                <span 
+                                    v-if="activeTab === 'active'"
+                                    class="font-medium"
+                                    :class="[
+                                        student.latest_attendance?.status === 'Present' ? 'text-emerald-600' :
+                                        student.latest_attendance?.status === 'Late' ? 'text-amber-600' :
+                                        student.latest_attendance?.status === 'Time Out' ? 'text-blue-600' :
+                                        'text-muted-foreground'
+                                    ]"
+                                >
+                                    {{ student.latest_attendance?.status || (isScheduledForToday(student) ? 'Scheduled' : 'No record') }}
+                                </span>
+                                <div v-else class="flex gap-1">
+                                    <Button size="icon-sm" variant="ghost" class="h-6 w-6 text-emerald-600" title="Restore" @click.stop="restoreStudent(student.id)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                                    </Button>
+                                    <Button size="icon-sm" variant="ghost" class="h-6 w-6 text-rose-600" title="Delete" @click.stop="forceDeleteStudent(student.id)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1689,11 +1863,14 @@ onMounted(() => {
                         class="p-6 text-center space-y-4"
                         :class="scanError ? 'bg-rose-50/50 dark:bg-rose-950/20' : 'bg-emerald-50/50 dark:bg-emerald-950/20'"
                     >
-                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-                             :class="scanError ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-600' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600'"
+                        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full transition-transform duration-500 hover:scale-110"
+                             :class="[
+                                scanError ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-600' : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600',
+                                !scanError ? 'animate-bounce' : 'animate-shake'
+                             ]"
                         >
-                            <CheckCircle2 v-if="!scanError" class="h-8 w-8" />
-                            <AlertCircle v-else class="h-8 w-8" />
+                            <CheckCircle2 v-if="!scanError" class="h-10 w-10" />
+                            <AlertCircle v-else class="h-10 w-10" />
                         </div>
                         
                         <div class="space-y-1">
@@ -1788,6 +1965,16 @@ onMounted(() => {
 
 .status-pulse {
     transition: all 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
 
 .glass-card {
