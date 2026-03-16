@@ -1,9 +1,22 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { onMounted, onUnmounted, ref, computed } from 'vue';
 import gsap from 'gsap';
 import { dashboard, login, register } from '@/routes';
 import ThemeToggle from '@/components/ThemeToggle.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import commentsRoutes from '@/routes/comments';
+import ratingsRoutes from '@/routes/ratings';
 
 type Comment = {
     id: number;
@@ -225,6 +238,52 @@ onMounted(() => {
     startAutoSlide();
 });
 
+const ratingModalOpen = ref(false);
+const commentModalOpen = ref(false);
+
+const ratingForm = useForm({
+    name: '',
+    email: '',
+    score: 5,
+    message: '',
+});
+
+const commentForm = useForm({
+    name: '',
+    email: '',
+    message: '',
+});
+
+function openRatingModal() {
+    ratingForm.reset();
+    ratingModalOpen.value = true;
+}
+
+function openCommentModal() {
+    commentForm.reset();
+    commentModalOpen.value = true;
+}
+
+function submitRating() {
+    ratingForm.post(ratingsRoutes.store.url(), {
+        preserveScroll: true,
+        onSuccess: () => {
+            ratingModalOpen.value = false;
+            ratingForm.reset();
+        },
+    });
+}
+
+function submitComment() {
+    commentForm.post(commentsRoutes.store.url(), {
+        preserveScroll: true,
+        onSuccess: () => {
+            commentModalOpen.value = false;
+            commentForm.reset();
+        },
+    });
+}
+
 onUnmounted(() => {
     stopAutoSlide();
 });
@@ -312,13 +371,30 @@ onUnmounted(() => {
                     >
                         Go to dashboard
                     </Link>
-                    <Link
-                        v-else
-                        :href="login()"
-                        class="inline-flex items-center justify-center px-8 py-3.5 rounded-full border border-sidebar-border/70 text-foreground bg-background/50 backdrop-blur hover:bg-muted/50 transition-all text-sm font-medium tracking-wide"
-                    >
-                        Start Now!
-                    </Link>
+                    <template v-else>
+                        <Link
+                            :href="login()"
+                            class="inline-flex items-center justify-center px-8 py-3.5 rounded-full border border-sidebar-border/70 text-foreground bg-background/50 backdrop-blur hover:bg-muted/50 transition-all text-sm font-medium tracking-wide"
+                        >
+                            Start Now!
+                        </Link>
+                        <div class="flex gap-3">
+                            <Button
+                                variant="outline"
+                                class="rounded-full px-8 py-3.5 backdrop-blur bg-background/30 border-sidebar-border/50 text-xs font-medium uppercase tracking-widest hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
+                                @click="openRatingModal"
+                            >
+                                Rate Us ★
+                            </Button>
+                            <Button
+                                variant="outline"
+                                class="rounded-full px-8 py-3.5 backdrop-blur bg-background/30 border-sidebar-border/50 text-xs font-medium uppercase tracking-widest hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500/30 transition-all"
+                                @click="openCommentModal"
+                            >
+                                Feedback
+                            </Button>
+                        </div>
+                    </template>
                 </div>
             </div>
 
@@ -406,5 +482,91 @@ onUnmounted(() => {
             <span class="text-sidebar-border/70 hidden sm:inline">|</span>
             <p class="text-[10px]">&copy; {{ new Date().getFullYear() }} All rights reserved Koamishin.org</p>
         </footer>
+
+        <!-- Rating Modal -->
+        <Dialog v-model:open="ratingModalOpen">
+            <DialogContent class="max-w-sm">
+                <DialogHeader>
+                    <DialogTitle>Rate the system</DialogTitle>
+                    <DialogDescription>
+                        How was your experience using our attendance system?
+                    </DialogDescription>
+                </DialogHeader>
+                <form @submit.prevent="submitRating" class="space-y-4 py-2">
+                    <div class="flex justify-center gap-2">
+                        <button
+                            v-for="i in 5"
+                            :key="i"
+                            type="button"
+                            class="text-3xl transition-all hover:scale-110 active:scale-95"
+                            :class="i <= ratingForm.score ? 'text-yellow-400 drop-shadow-sm' : 'text-muted-foreground/30'"
+                            @click="ratingForm.score = i"
+                        >
+                             ★
+                        </button>
+                    </div>
+
+                    <div class="grid gap-3">
+                        <div class="space-y-1.5">
+                            <Label for="r-name" class="text-xs">Name (Optional)</Label>
+                            <Input id="r-name" v-model="ratingForm.name" placeholder="John Doe" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <Label for="r-message" class="text-xs">Any suggestions?</Label>
+                            <textarea
+                                id="r-message"
+                                v-model="ratingForm.message"
+                                placeholder="Optional comments..."
+                                rows="3"
+                                class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="submit" class="w-full" :disabled="ratingForm.processing">
+                            Submit Rating
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Suggestion Modal -->
+        <Dialog v-model:open="commentModalOpen">
+            <DialogContent class="max-w-sm">
+                <DialogHeader>
+                    <DialogTitle>Suggestions</DialogTitle>
+                    <DialogDescription>
+                        We'd love to hear how we can improve.
+                    </DialogDescription>
+                </DialogHeader>
+                <form @submit.prevent="submitComment" class="space-y-4 py-2">
+                    <div class="grid gap-3">
+                        <div class="space-y-1.5">
+                            <Label for="c-name" class="text-xs">Name (Optional)</Label>
+                            <Input id="c-name" v-model="commentForm.name" placeholder="John Doe" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <Label for="c-message" class="text-xs">Your Feedback</Label>
+                            <textarea
+                                id="c-message"
+                                v-model="commentForm.message"
+                                placeholder="What's on your mind?"
+                                rows="4"
+                                required
+                                class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="submit" class="w-full" :disabled="commentForm.processing">
+                            Send Feedback
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

@@ -20,6 +20,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import commentsRoutes from '@/routes/comments';
 import ratingsRoutes from '@/routes/ratings';
 
@@ -1053,7 +1060,7 @@ onMounted(() => {
             </div>
 
             <Dialog v-model:open="createModalOpen">
-                <DialogContent class="max-w-md">
+                <DialogContent class="max-w-sm">
                     <DialogHeader>
                         <DialogTitle>
                             Add student
@@ -1204,7 +1211,7 @@ onMounted(() => {
 
             <!-- Student Info Modal -->
             <Dialog v-model:open="studentInfoModalOpen">
-                <DialogContent class="max-w-lg">
+                <DialogContent class="max-w-md">
                     <DialogHeader>
                         <DialogTitle>Student Info</DialogTitle>
                     </DialogHeader>
@@ -1386,7 +1393,7 @@ onMounted(() => {
             </Dialog>
 
             <Dialog v-model:open="editModalOpen">
-                <DialogContent class="max-w-md">
+                <DialogContent class="max-w-sm">
                     <DialogHeader>
                         <DialogTitle>
                             Edit student
@@ -1541,7 +1548,7 @@ onMounted(() => {
             </Dialog>
 
             <Dialog v-model:open="qrModalOpen">
-                <DialogContent class="max-w-md">
+                <DialogContent class="max-w-sm">
                     <DialogHeader>
                         <DialogTitle>
                             Student QR code

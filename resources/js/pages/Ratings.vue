@@ -6,7 +6,16 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogClose,
+} from '@/components/ui/dialog';
 import ratingsRoutes from '@/routes/ratings';
+import { Filter, Calendar, X } from 'lucide-vue-next';
 
 type Rating = {
     id: number;
@@ -45,6 +54,14 @@ const editIsPublic = ref(true);
 const saving = ref(false);
 const from = ref(props.filters?.from ?? '');
 const to = ref(props.filters?.to ?? '');
+const filterModalOpen = ref(false);
+
+function clearFilters() {
+    from.value = '';
+    to.value = '';
+    applyFilter();
+    filterModalOpen.value = false;
+}
 
 function startEdit(rating: Rating) {
     editingId.value = rating.id;
@@ -103,6 +120,9 @@ function applyFilter() {
         {
             preserveScroll: true,
             preserveState: true,
+            onSuccess: () => {
+                filterModalOpen.value = false;
+            }
         },
     );
 }
@@ -218,42 +238,90 @@ onMounted(() => {
                     See how users rate the attendance experience. You can filter
                     by date, edit scores, or hide entries.
                 </p>
-                <div class="mt-4 flex flex-wrap items-end gap-3 text-xs">
-                    <div class="space-y-1">
-                        <label class="block text-[11px] font-medium text-muted-foreground">
-                            From
-                        </label>
-                        <Input v-model="from" type="date" class="h-8 text-xs" />
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="h-9 gap-2"
+                            @click="filterModalOpen = true"
+                        >
+                            <Filter class="h-4 w-4" />
+                            Filter by Date
+                        </Button>
+
+                        <div v-if="from || to" class="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-[11px] font-medium animate-in fade-in zoom-in duration-300">
+                            <Calendar class="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>
+                                {{ from || 'Any' }} — {{ to || 'Any' }}
+                            </span>
+                            <button
+                                class="ml-1 rounded-full p-0.5 hover:bg-muted"
+                                @click="clearFilters"
+                            >
+                                <X class="h-3 w-3" />
+                            </button>
+                        </div>
                     </div>
-                    <div class="space-y-1">
-                        <label class="block text-[11px] font-medium text-muted-foreground">
-                            To
-                        </label>
-                        <Input v-model="to" type="date" class="h-8 text-xs" />
+                </div>
+            </div>
+
+            <!-- Filter Modal -->
+            <Dialog v-model:open="filterModalOpen">
+                <DialogContent class="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Filter by Date</DialogTitle>
+                    </DialogHeader>
+                    <div class="space-y-4 py-2">
+                        <div class="grid gap-4">
+                            <div class="space-y-2">
+                                <label class="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    From
+                                </label>
+                                <Input v-model="from" type="date" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    To
+                                </label>
+                                <Input v-model="to" type="date" />
+                            </div>
+                        </div>
                     </div>
-                    <Button
-                        size="sm"
-                        class="mt-5"
-                        variant="outline"
-                        @click="applyFilter"
-                    >
-                        Filter
-                    </Button>
+                    <DialogFooter class="flex flex-row justify-between sm:justify-between items-center gap-2 pt-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            class="text-xs text-muted-foreground hover:text-foreground"
+                            @click="clearFilters"
+                        >
+                            Clear filters
+                        </Button>
+                        <div class="flex gap-2">
+                            <DialogClose as-child>
+                                <Button variant="outline" size="sm">Cancel</Button>
+                            </DialogClose>
+                            <Button size="sm" @click="applyFilter">Apply Filter</Button>
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <div
+                v-if="ratings.length === 0"
+                class="flex w-full items-center justify-center rounded-2xl border border-dashed border-sidebar-border/70 bg-muted/30 p-12 text-center text-sm text-muted-foreground shadow-sm backdrop-blur-sm dark:border-sidebar-border"
+            >
+                <div class="max-w-[300px] space-y-2">
+                    <p class="font-medium text-foreground">No ratings yet</p>
+                    <p>Once guests rate from the welcome page, they will appear here in detailed cards.</p>
                 </div>
             </div>
 
             <div
+                v-else
                 ref="listRef"
                 class="columns-1 md:columns-2 xl:columns-3 gap-4 space-y-4"
             >
-                <div
-                    v-if="ratings.length === 0"
-                    data-rating-card
-                    class="flex flex-col justify-center rounded-xl border border-dashed border-sidebar-border/70 bg-muted/40 p-6 text-xs text-muted-foreground dark:border-sidebar-border"
-                >
-                    No ratings yet. Once guests rate from the welcome page, they
-                    will appear here.
-                </div>
 
                 <article
                     v-for="rating in ratings"
