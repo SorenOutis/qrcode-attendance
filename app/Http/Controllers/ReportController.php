@@ -30,11 +30,11 @@ class ReportController extends Controller
 
         // 2. Section Comparison
         $sectionStats = Student::withCount(['attendances' => function ($query) use ($startDate) {
-                $query->where('scanned_at', '>=', $startDate);
-            }])
+            $query->where('scanned_at', '>=', $startDate);
+        }])
             ->get()
             ->groupBy('section')
-            ->map(fn($students) => $students->sum('attendances_count'));
+            ->map(fn ($students) => $students->sum('attendances_count'));
 
         // 3. Status distribution
         $statusStats = Attendance::where('scanned_at', '>=', $startDate)

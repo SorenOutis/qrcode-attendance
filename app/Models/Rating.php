@@ -22,4 +22,3 @@ class Rating extends Model
         'score' => 'integer',
     ];
 }
-

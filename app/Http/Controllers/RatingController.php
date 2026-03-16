@@ -75,4 +75,3 @@ class RatingController extends Controller
         return back();
     }
 }
-

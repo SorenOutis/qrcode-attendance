@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Student;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -62,20 +63,20 @@ class StudentController extends Controller
             $latest = $latestByStudent->get($student->id);
 
             return [
-                'id'               => $student->id,
-                'name'             => $student->name,
-                'student_number'   => $student->student_number,
-                'email'            => $student->email,
-                'section'          => $student->section,
-                'qr_token'         => $student->qr_token,
-                'schedule'         => $student->schedule,
-                'created_at'       => $student->created_at,
-                'deleted_at'       => $student->deleted_at,
-                'today_statuses'   => $statusesByStudent->get($student->id, []),
+                'id' => $student->id,
+                'name' => $student->name,
+                'student_number' => $student->student_number,
+                'email' => $student->email,
+                'section' => $student->section,
+                'qr_token' => $student->qr_token,
+                'schedule' => $student->schedule,
+                'created_at' => $student->created_at,
+                'deleted_at' => $student->deleted_at,
+                'today_statuses' => $statusesByStudent->get($student->id, []),
                 'latest_attendance' => $latest
                     ? [
-                        'id'         => $latest->id,
-                        'status'     => $latest->status,
+                        'id' => $latest->id,
+                        'status' => $latest->status,
                         'scanned_at' => $latest->scanned_at,
                     ]
                     : null,
@@ -83,7 +84,7 @@ class StudentController extends Controller
         };
 
         return Inertia::render('Dashboard', [
-            'students'        => $students->map($mapStudent),
+            'students' => $students->map($mapStudent),
             'trashedStudents' => $trashedStudents->map($mapStudent),
         ]);
     }
@@ -215,18 +216,17 @@ class StudentController extends Controller
             ]);
     }
 
-    public function attendance(Student $student): \Illuminate\Http\JsonResponse
+    public function attendance(Student $student): JsonResponse
     {
         $history = $student->attendances()
             ->orderByDesc('scanned_at')
             ->get(['id', 'status', 'scanned_at'])
             ->map(fn ($a) => [
-                'id'         => $a->id,
-                'status'     => $a->status,
+                'id' => $a->id,
+                'status' => $a->status,
                 'scanned_at' => $a->scanned_at->toISOString(),
             ]);
 
         return response()->json(['history' => $history]);
     }
 }
-

@@ -20,4 +20,3 @@ class Comment extends Model
         'is_public' => 'boolean',
     ];
 }
-

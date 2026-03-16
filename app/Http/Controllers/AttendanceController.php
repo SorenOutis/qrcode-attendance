@@ -104,7 +104,7 @@ class AttendanceController extends Controller
 
         if ($dailyRecords->count() >= 2) {
             return response()->json([
-                'message' => "You have already completed your attendance for today. You cannot be scanned again until the next day.",
+                'message' => 'You have already completed your attendance for today. You cannot be scanned again until the next day.',
             ], 422);
         }
 
@@ -147,4 +147,3 @@ class AttendanceController extends Controller
         ]);
     }
 }
-
