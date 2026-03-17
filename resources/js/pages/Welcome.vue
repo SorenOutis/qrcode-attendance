@@ -17,6 +17,7 @@ import {
 import { Label } from '@/components/ui/label';
 import commentsRoutes from '@/routes/comments';
 import ratingsRoutes from '@/routes/ratings';
+import ScanningVisual from '@/components/ScanningVisual.vue';
 
 type Comment = {
     id: number;
@@ -405,19 +406,8 @@ onUnmounted(() => {
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full border border-sidebar-border/40 animate-[spin_60s_linear_infinite]"></div>
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] rounded-full border border-sidebar-border/60 border-dashed animate-[spin_40s_linear_infinite_reverse]"></div>
                     
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] h-[75%] bg-background/80 backdrop-blur-2xl rounded-3xl border border-white/20 dark:border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_30px_60px_-15px_rgba(255,255,255,0.05)] p-6 flex flex-col items-center justify-center gap-6 overflow-hidden transform hover:scale-[1.02] transition-transform duration-700">
-                        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center shadow-inner">
-                            <svg class="w-10 h-10 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM13.5 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
-                            </svg>
-                        </div>
-                        <div class="w-full space-y-3 px-4">
-                            <div class="h-2 w-full bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                <div class="h-full bg-foreground w-2/3 rounded-full"></div>
-                            </div>
-                            <div class="h-2 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto"></div>
-                            <div class="h-2 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto"></div>
-                        </div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full transform hover:scale-[1.02] transition-transform duration-700">
+                        <ScanningVisual />
                     </div>
                 </div>
             </div>
