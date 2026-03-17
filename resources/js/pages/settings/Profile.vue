@@ -40,9 +40,7 @@ const handleLogout = () => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Profile settings" />
-
-        <h1 class="sr-only">Profile settings</h1>
+        <h1 class="text-2xl font-serif font-bold tracking-tight text-foreground px-6 pt-6 sm:px-8 sm:pt-8 bg-white dark:bg-black rounded-t-2xl border-x border-t border-zinc-200 dark:border-zinc-800 -mb-8">Profile settings</h1>
 
         <SettingsLayout>
             <div class="flex flex-col space-y-8">

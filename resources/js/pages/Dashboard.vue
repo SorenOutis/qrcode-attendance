@@ -1000,7 +1000,7 @@ onMounted(() => {
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
             <!-- Welcome Header -->
             <div class="flex flex-col gap-1 px-1">
-                <h1 class="text-3xl font-bold tracking-tight">
+                <h1 class="text-3xl font-serif font-bold tracking-tight">
                     {{ greeting }}, {{ userName }}!
                 </h1>
                 <div class="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1142,9 +1142,12 @@ onMounted(() => {
                         ref="tableRef"
                         class="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl"
                     >
-                <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-4 gap-4 bg-zinc-50 dark:bg-zinc-900/50">
-                    <div class="flex items-center gap-4">
-                        <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide border border-zinc-200 dark:border-zinc-800">
+                        <div class="flex flex-col border-b border-zinc-200 dark:border-zinc-800 p-6 gap-6 bg-zinc-50 dark:bg-zinc-900/50">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-2xl font-serif font-bold tracking-tight text-foreground">
+                                    Student Records
+                                </h2>
+                                <div class="flex rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 p-1 shrink-0 overflow-x-auto whitespace-nowrap scrollbar-hide border border-zinc-200 dark:border-zinc-800">
                             <button
                                 class="rounded-md px-3 py-1 text-xs font-medium transition-all"
                                 :class="activeTab === 'active' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'"

@@ -120,7 +120,7 @@ function exportCsv() {
         <div class="flex flex-col gap-6 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Reports & Analytics</h1>
+                    <h1 class="text-2xl font-serif font-bold tracking-tight">Reports & Analytics</h1>
                     <p class="text-muted-foreground">Detailed overview of attendance trends and statistics.</p>
                 </div>
                 <Button @click="exportCsv">
@@ -134,11 +134,10 @@ function exportCsv() {
             </div>
 
             <div v-else class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <!-- Trend Chart -->
                 <div class="report-card col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white">
                     <div class="mb-4 flex items-center gap-2">
                         <TrendingUp class="h-5 w-5 text-zinc-900 dark:text-white" />
-                        <h3 class="font-semibold text-lg">Attendance Trend (30 Days)</h3>
+                        <h3 class="font-serif font-semibold text-lg">Attendance Trend (30 Days)</h3>
                     </div>
                     <div class="h-64">
                         <Line :data="lineData" :options="chartOptions" v-if="lineData" />
@@ -149,7 +148,7 @@ function exportCsv() {
                 <div class="report-card rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white">
                     <div class="mb-4 flex items-center gap-2">
                         <Clock class="h-5 w-5 text-zinc-900 dark:text-white" />
-                        <h3 class="font-semibold text-lg">Status Distribution</h3>
+                        <h3 class="font-serif font-semibold text-lg">Status Distribution</h3>
                     </div>
                     <div class="h-64">
                         <Pie :data="pieData" :options="chartOptions" v-if="pieData" />
@@ -160,7 +159,7 @@ function exportCsv() {
                 <div class="report-card col-span-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white">
                     <div class="mb-4 flex items-center gap-2">
                         <Users class="h-5 w-5 text-zinc-900 dark:text-white" />
-                        <h3 class="font-semibold text-lg">Activity by Section</h3>
+                        <h3 class="font-serif font-semibold text-lg">Activity by Section</h3>
                     </div>
                     <div class="h-64">
                         <Bar :data="barData" :options="chartOptions" v-if="barData" />

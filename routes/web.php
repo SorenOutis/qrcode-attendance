@@ -5,6 +5,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StudentController;
+use App\Models\Attendance;
 use App\Models\Comment;
 use App\Models\Rating;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,10 @@ Route::get('/', function () {
         'canRegister' => Features::enabled(Features::registration()),
         'comments' => Comment::where('is_public', true)->latest()->take(10)->get(),
         'ratings' => Rating::where('is_public', true)->latest()->take(10)->get(),
+        'stats' => [
+            'total_scans' => Attendance::count(),
+            'present_today' => Attendance::whereDate('created_at', today())->where('status', 'Present')->count(),
+        ],
     ]);
 })->name('home');
 

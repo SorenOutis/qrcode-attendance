@@ -175,35 +175,33 @@ onMounted(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4">
-            <div
-                class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-6 shadow-xl text-zinc-900 dark:text-white"
-            >
-                <h1 class="text-lg font-semibold text-foreground">
-                    Comments & suggestions
+            <div class="rounded-[2rem] border border-sidebar-border/50 bg-background/50 backdrop-blur-xl p-8 shadow-2xl relative overflow-hidden group">
+                <div class="absolute -right-16 -top-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors duration-700"></div>
+                <h1 class="text-2xl font-serif font-bold text-foreground tracking-tight">
+                    Comments & Suggestions
                 </h1>
-                <p class="mt-1 text-xs text-muted-foreground">
-                    Feedback submitted from the public landing page will appear
-                    here. You can review, lightly edit, or remove entries.
+                <p class="mt-2 text-sm text-muted-foreground/80 font-light max-w-2xl leading-relaxed">
+                    Review and curate the feedback submitted from the presence gateway. Each entry represents a unique interaction with the system.
                 </p>
-                <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-2">
+                <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
                         <Button
                             variant="outline"
                             size="sm"
-                            class="h-9 gap-2"
+                            class="h-10 px-5 rounded-full border-sidebar-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/50 transition-all gap-2 text-xs font-semibold tracking-wide"
                             @click="filterModalOpen = true"
                         >
-                            <Filter class="h-4 w-4" />
-                            Filter by Date
+                            <Filter class="h-3.5 w-3.5" />
+                            Filter Timeline
                         </Button>
 
-                        <div v-if="from || to" class="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-[11px] font-medium animate-in fade-in zoom-in duration-300">
-                            <Calendar class="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>
-                                {{ from || 'Any' }} — {{ to || 'Any' }}
+                        <div v-if="from || to" class="flex items-center gap-2 rounded-full border border-sidebar-border bg-muted/30 px-4 py-2 text-[11px] font-medium tracking-wide animate-in fade-in zoom-in duration-500">
+                            <Calendar class="h-3.5 w-3.5 text-primary" />
+                            <span class="text-foreground">
+                                {{ from || 'Initial' }} — {{ to || 'Latest' }}
                             </span>
                             <button
-                                class="ml-1 rounded-full p-0.5 hover:bg-muted"
+                                class="ml-1 rounded-full p-1 hover:bg-muted/80 transition-colors"
                                 @click="clearFilters"
                             >
                                 <X class="h-3 w-3" />
@@ -267,100 +265,109 @@ onMounted(() => {
             <div
                 v-else
                 ref="listRef"
-                class="columns-2 xl:columns-3 gap-2 sm:gap-4 space-y-2 sm:space-y-4"
+                class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
             >
 
                 <article
                     v-for="comment in comments"
                     :key="comment.id"
                     data-comment-card
-                    class="group relative overflow-hidden break-inside-avoid mb-4 flex flex-col justify-between rounded-2xl md:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black p-4 md:p-6 text-[10px] md:text-sm shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 text-zinc-900 dark:text-white"
+                    class="group relative flex flex-col rounded-[2rem] border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-6 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden"
                 >
-                    <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-zinc-100 dark:bg-zinc-900 blur-2xl transition-all duration-500 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-800 pointer-events-none z-0"></div>
+                    <!-- Abstract Background Element -->
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
                     
-                    <div class="relative z-10 space-y-2">
-                        <div>
-                            <p class="text-[10px] md:text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-[12ch] sm:max-w-none">
-                                {{ comment.name || 'Anonymous' }}
-                            </p>
-                            <p
-                                v-if="comment.email"
-                                class="text-[9px] md:text-[11px] text-muted-foreground/80 whitespace-nowrap overflow-hidden text-ellipsis max-w-[15ch] sm:max-w-none"
-                            >
-                                {{ comment.email }}
-                            </p>
-                            <p class="mt-1 text-[11px] text-muted-foreground/80">
-                                {{ new Date(comment.created_at).toLocaleString() }}
-                            </p>
+                    <div class="relative z-10 flex-1 flex flex-col gap-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                                    <span class="text-xs font-bold text-primary">{{ (comment.name || 'A').charAt(0).toUpperCase() }}</span>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-serif font-bold text-foreground leading-tight truncate">
+                                        {{ comment.name || 'Anonymous' }}
+                                    </h3>
+                                    <p class="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">
+                                        User Feedback
+                                    </p>
+                                </div>
+                            </div>
+                            <time class="text-[10px] text-muted-foreground/60 font-mono">
+                                {{ new Date(comment.created_at).toLocaleDateString() }}
+                            </time>
                         </div>
 
-                        <div v-if="editingId === comment.id" class="space-y-2">
+                        <div v-if="editingId === comment.id" class="space-y-4 py-2">
                             <textarea
                                 v-model="editMessage"
                                 rows="4"
-                                class="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                                class="w-full rounded-2xl border border-sidebar-border bg-background/50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all backdrop-blur-sm"
                             />
-                            <label class="flex items-center gap-2 text-[11px] text-muted-foreground">
+                            <label class="flex items-center gap-3 cursor-pointer">
                                 <input
                                     v-model="editIsPublic"
                                     type="checkbox"
-                                    class="h-3 w-3 rounded border-input bg-background text-primary focus-visible:ring-1 focus-visible:ring-ring"
+                                    class="h-4 w-4 rounded-full border-sidebar-border bg-background text-primary focus:ring-primary/20 transition-all"
                                 />
-                                Visible in lists
+                                <span class="text-xs text-muted-foreground font-medium">Visible to everyone</span>
                             </label>
                         </div>
-                        <p
-                            v-else
-                            class="whitespace-pre-wrap text-xs leading-relaxed text-foreground"
-                        >
-                            {{ comment.message }}
-                        </p>
+                        <div v-else class="flex-1">
+                            <p class="text-sm leading-relaxed text-foreground/90 font-light italic line-clamp-3 group-hover:line-clamp-none transition-all duration-500">
+                                "{{ comment.message }}"
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="relative z-10 mt-3 flex items-center justify-between gap-2">
-                        <span
-                            class="rounded-full bg-zinc-100 dark:bg-zinc-900 px-2 py-0.5 md:px-3 md:py-1 text-[8px] md:text-[11px] font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800"
-                        >
-                            {{ comment.is_public ? 'Public' : 'Hidden' }}
-                        </span>
+                    <div class="relative z-10 mt-6 pt-5 border-t border-sidebar-border/30 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="inline-flex h-2 w-2 rounded-full"
+                                :class="comment.is_public ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-zinc-400'"
+                            ></span>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                {{ comment.is_public ? 'Public' : 'Private' }}
+                            </span>
+                        </div>
 
-                        <div class="flex gap-1 md:gap-2">
-                            <Button
-                                v-if="editingId === comment.id"
-                                size="sm"
-                                variant="outline"
-                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm"
-                                :disabled="saving"
-                                @click="saveEdit(comment)"
-                            >
-                                Save
-                            </Button>
-                            <Button
-                                v-if="editingId === comment.id"
-                                size="sm"
-                                variant="ghost"
-                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm"
-                                @click="cancelEdit"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                v-else
-                                size="sm"
-                                variant="outline"
-                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm"
-                                @click="startEdit(comment)"
-                            >
-                                Edit
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                class="h-6 px-2 text-[9px] md:h-9 md:px-3 md:text-sm text-destructive hover:bg-destructive/10"
-                                @click="remove(comment)"
-                            >
-                                Delete
-                            </Button>
+                        <div class="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <template v-if="editingId === comment.id">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    class="h-8 px-4 rounded-full border-sidebar-border hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all text-xs font-semibold"
+                                    :disabled="saving"
+                                    @click="saveEdit(comment)"
+                                >
+                                    Save
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    class="h-8 px-4 rounded-full hover:bg-muted/50 transition-all text-xs font-semibold"
+                                    @click="cancelEdit"
+                                >
+                                    Cancel
+                                </Button>
+                            </template>
+                            <template v-else>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    class="h-8 px-4 rounded-full border-sidebar-border hover:bg-muted transition-all text-xs font-semibold"
+                                    @click="startEdit(comment)"
+                                >
+                                    Edit
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    class="h-8 px-4 rounded-full text-destructive hover:bg-destructive/10 transition-all text-xs font-semibold"
+                                    @click="remove(comment)"
+                                >
+                                    Remove
+                                </Button>
+                            </template>
                         </div>
                     </div>
                 </article>
