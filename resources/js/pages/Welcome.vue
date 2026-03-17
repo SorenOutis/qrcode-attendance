@@ -377,7 +377,7 @@ onUnmounted(() => {
             </nav>
         </header>
 
-        <main class="relative z-10 flex flex-col lg:flex-row min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-100px)] w-full gap-4 lg:gap-0 lg:py-0 pb-8 lg:pb-0">
+        <main class="relative z-10 flex flex-col lg:flex-row lg:min-h-[calc(100vh-100px)] w-full gap-4 lg:gap-0 lg:py-0 pb-6 lg:pb-0">
             <!-- Left Side Content -->
             <div class="w-full lg:w-5/12 flex flex-col justify-center px-6 lg:px-16 z-20">
                 <div ref="titleRef" class="space-y-3 lg:space-y-4 mb-6 lg:mb-8">
@@ -456,7 +456,7 @@ onUnmounted(() => {
         </main>
 
         <!-- Feedback Section -->
-        <section class="relative z-10 w-full px-6 lg:px-16 py-12 lg:py-16 bg-background/40 backdrop-blur-md border-t border-sidebar-border/30">
+        <section class="relative z-10 w-full px-6 lg:px-16 py-8 lg:py-12 bg-background/40 backdrop-blur-md border-t border-sidebar-border/30">
             <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
                 <div class="w-full lg:w-4/12 flex flex-col justify-center">
                     <h2 class="text-2xl lg:text-3xl font-serif font-bold text-foreground mb-3 lg:mb-4">What Our Users Say</h2>
@@ -468,7 +468,7 @@ onUnmounted(() => {
                 <!-- Right Side Carousel -->
                 <div ref="carouselContainerRef" 
                      v-if="cards.length > 0"
-                     class="w-full lg:w-7/12 mt-12 lg:mt-0 relative h-[380px] lg:h-[450px] flex flex-col justify-end"
+                     class="w-full lg:w-7/12 mt-6 lg:mt-0 relative h-[320px] lg:h-[420px] flex flex-col justify-end"
                      @mouseenter="isHovering = true"
                      @mouseleave="isHovering = false"
                 >
@@ -521,7 +521,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Empty State for Carousel -->
-                <div v-else class="w-full lg:w-7/12 relative h-[380px] lg:h-[450px] flex items-center justify-center">
+                <div v-else class="w-full lg:w-7/12 relative h-[260px] lg:h-[420px] flex items-center justify-center">
                     <div class="w-full max-w-[320px] text-center space-y-5 rounded-3xl border border-dashed border-sidebar-border bg-background/30 backdrop-blur-sm p-10 shadow-sm relative overflow-hidden group hover:border-sidebar-border/80 transition-all duration-500">
                         <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
                         <div class="w-16 h-16 rounded-full bg-background/50 mx-auto flex items-center justify-center text-muted-foreground/50 border border-sidebar-border/50 shadow-inner relative z-10">
@@ -554,13 +554,19 @@ onUnmounted(() => {
                     </p>
                 </div>
 
-                <!-- Steps Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 relative">
-                    <!-- Connecting Line (Desktop) -->
+                <!-- Mobile: Snap Scroll Carousel | Desktop: Grid -->
+                <div class="relative">
+                    <!-- Desktop connecting line -->
                     <div class="hidden md:block absolute top-10 left-[20%] right-[20%] h-[1px] bg-gradient-to-r from-transparent via-sidebar-border/50 to-transparent z-0"></div>
 
+                    <!-- Cards Container -->
+                    <div 
+                        id="how-it-works-carousel"
+                        class="flex md:grid md:grid-cols-3 gap-4 lg:gap-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scroll-smooth pb-4 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0"
+                        style="scrollbar-width: none; -ms-overflow-style: none;"
+                    >
                     <!-- Step 1 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1">
+                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-emerald-500/40 group-hover:bg-emerald-500/5 transition-all duration-500 shadow-inner">
                             <svg class="w-9 h-9 text-emerald-500/80 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -574,7 +580,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 md:-translate-y-4">
+                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 md:-translate-y-4 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-6 group-hover:border-emerald-500/60 group-hover:bg-emerald-500/20 transition-all duration-500 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                             <svg class="w-9 h-9 text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -588,7 +594,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1">
+                    <div class="group relative flex flex-col items-center text-center p-8 rounded-3xl border border-sidebar-border/40 bg-background/20 backdrop-blur-sm hover:border-emerald-500/30 hover:bg-background/40 transition-all duration-500 hover:-translate-y-1 shrink-0 w-[85vw] md:w-auto snap-center snap-always">
                         <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         <div class="relative z-10 w-20 h-20 rounded-2xl bg-foreground/5 border border-sidebar-border/60 flex items-center justify-center mb-6 group-hover:border-emerald-500/40 group-hover:bg-emerald-500/5 transition-all duration-500 shadow-inner">
                             <svg class="w-9 h-9 text-emerald-500/80 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -598,6 +604,14 @@ onUnmounted(() => {
                         <div class="text-xs font-mono text-muted-foreground/50 uppercase tracking-widest mb-2">Step 03</div>
                         <h3 class="text-lg font-serif font-bold text-foreground mb-3">Real-time Tracking</h3>
                         <p class="text-sm text-muted-foreground/80 font-light leading-relaxed">Attendance is instantly recorded and visible in the admin dashboard — live, accurate, and exportable.</p>
+                    </div>
+                    </div>
+
+                    <!-- Mobile Dots Indicator -->
+                    <div class="flex md:hidden items-center justify-center gap-2 mt-6">
+                        <div class="w-6 h-1.5 rounded-full bg-foreground/60 transition-all duration-300"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-foreground/20 transition-all duration-300"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-foreground/20 transition-all duration-300"></div>
                     </div>
                 </div>
             </div>
