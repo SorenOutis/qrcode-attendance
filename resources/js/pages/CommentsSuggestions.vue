@@ -272,7 +272,7 @@ onMounted(() => {
                     v-for="comment in comments"
                     :key="comment.id"
                     data-comment-card
-                    class="group relative flex flex-col rounded-[2rem] border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-6 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden"
+                    class="group relative flex flex-col rounded-2xl border border-sidebar-border/40 bg-background/40 backdrop-blur-xl p-5 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-1.5 hover:border-sidebar-border/80 hover:bg-background/60 overflow-hidden"
                 >
                     <!-- Abstract Background Element -->
                     <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors pointer-events-none"></div>
@@ -280,8 +280,8 @@ onMounted(() => {
                     <div class="relative z-10 flex-1 flex flex-col gap-4">
                         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 overflow-hidden">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
-                                    <span class="text-xs font-bold text-primary">{{ (comment.name || 'A').charAt(0).toUpperCase() }}</span>
+                                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors shrink-0">
+                                    <span class="text-[10px] font-bold text-primary">{{ (comment.name || 'A').charAt(0).toUpperCase() }}</span>
                                 </div>
                                 <div class="min-w-0">
                                     <h3 class="text-sm font-serif font-bold text-foreground leading-tight truncate">
@@ -319,7 +319,7 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <div class="relative z-10 mt-6 pt-5 border-t border-sidebar-border/30 flex items-center justify-between gap-3">
+                    <div class="relative z-10 mt-4 pt-4 border-t border-sidebar-border/30 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2">
                             <span
                                 class="inline-flex h-2 w-2 rounded-full"
